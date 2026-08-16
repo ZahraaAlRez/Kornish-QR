@@ -1,0 +1,169 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  background-color: #f3ecdc;
+  color: #2b1b12;
+}
+
+/* ── Category animations (spec §6, decision B: custom-coded, no assets) ── */
+
+@keyframes bean-fall {
+  0% {
+    transform: translateY(-40px) rotate(0deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 1;
+  }
+  70% {
+    transform: translateY(38px) rotate(25deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(42px) rotate(25deg);
+    opacity: 0;
+  }
+}
+
+@keyframes cup-fill {
+  0%,
+  20% {
+    transform: scaleY(0);
+  }
+  100% {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes steam-rise {
+  0% {
+    transform: translateY(6px);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(-22px);
+    opacity: 0;
+  }
+}
+
+@keyframes ice-drop {
+  0% {
+    transform: translateY(-50px) rotate(0deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  55% {
+    transform: translateY(30px) rotate(15deg);
+    opacity: 1;
+  }
+  60% {
+    transform: translateY(30px) scale(1, 0.85);
+  }
+  70% {
+    transform: translateY(28px) scale(1, 1);
+  }
+  100% {
+    transform: translateY(28px) rotate(15deg);
+    opacity: 0;
+  }
+}
+
+@keyframes liquid-rise {
+  0%,
+  35% {
+    transform: scaleY(0);
+  }
+  100% {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes condensation-fade {
+  0%,
+  40% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes bread-close {
+  0% {
+    transform: translateY(-46px);
+  }
+  50% {
+    transform: translateY(-46px);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes filling-pop {
+  0%,
+  40% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes sprinkle-fall {
+  0% {
+    transform: translate(0, -30px) rotate(0deg);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--sprinkle-x, 0), 40px) rotate(180deg);
+    opacity: 1;
+  }
+}
+
+.animate-bean-fall {
+  animation: bean-fall 2.6s ease-in infinite;
+}
+.animate-cup-fill {
+  animation: cup-fill 2.6s ease-out infinite;
+  transform-origin: bottom;
+}
+.animate-steam-rise {
+  animation: steam-rise 2.6s ease-in-out infinite;
+}
+.animate-ice-drop {
+  animation: ice-drop 2.8s ease-in infinite;
+}
+.animate-liquid-rise {
+  animation: liquid-rise 2.8s ease-out infinite;
+  transform-origin: bottom;
+}
+.animate-condensation {
+  animation: condensation-fade 2.8s ease-in-out infinite;
+}
+.animate-bread-close {
+  animation: bread-close 2.4s ease-in-out infinite;
+}
+.animate-filling-pop {
+  animation: filling-pop 2.4s ease-out infinite;
+}
+.animate-sprinkle {
+  animation: sprinkle-fall 2.6s ease-in infinite;
+}

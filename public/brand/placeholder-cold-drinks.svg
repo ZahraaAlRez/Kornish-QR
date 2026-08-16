@@ -1,0 +1,43 @@
+<svg viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgCold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3A2A1E"/>
+      <stop offset="100%" stop-color="#2B1B12"/>
+    </linearGradient>
+    <linearGradient id="glassCold" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#F3ECDC" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#F3ECDC" stop-opacity="0.55"/>
+    </linearGradient>
+    <linearGradient id="goldCold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#D9AE5C"/>
+      <stop offset="100%" stop-color="#B8862E"/>
+    </linearGradient>
+  </defs>
+  <rect width="600" height="400" fill="url(#bgCold)"/>
+  <g opacity="0.45">
+    <circle cx="80" cy="80" r="9" fill="#9FB08C"/>
+    <circle cx="520" cy="100" r="7" fill="#9FB08C"/>
+    <circle cx="500" cy="320" r="9" fill="#9FB08C"/>
+  </g>
+  <g transform="translate(300,205)">
+    <path d="M-80 -110 L80 -110 L58 130 C56 148, 30 160, 0 160 C-30 160, -56 148, -58 130 Z"
+          fill="url(#glassCold)" stroke="url(#goldCold)" stroke-width="4"/>
+    <rect x="-72" y="-40" width="144" height="46" fill="#B8862E" opacity="0.28"/>
+    <g opacity="0.9">
+      <rect x="-40" y="-95" width="30" height="30" rx="6" fill="#EAF3F0" transform="rotate(-8 -25 -80)"/>
+      <rect x="0" y="-70" width="28" height="28" rx="6" fill="#EAF3F0" transform="rotate(10 14 -56)"/>
+      <rect x="-15" y="-40" width="26" height="26" rx="6" fill="#DDEDE8" transform="rotate(-5 -2 -27)"/>
+    </g>
+    <g stroke="#F3ECDC" stroke-width="4" stroke-linecap="round" opacity="0.55">
+      <path d="M-24 60 v-90"/>
+      <path d="M2 70 v-100"/>
+      <path d="M28 60 v-90"/>
+    </g>
+    <circle cx="-70" cy="-60" r="3" fill="#F3ECDC" opacity="0.8"/>
+    <circle cx="72" cy="-30" r="3" fill="#F3ECDC" opacity="0.8"/>
+    <circle cx="-66" cy="10" r="2.5" fill="#F3ECDC" opacity="0.7"/>
+    <circle cx="68" cy="40" r="2.5" fill="#F3ECDC" opacity="0.7"/>
+  </g>
+  <text x="300" y="380" text-anchor="middle" font-family="Georgia, serif" font-size="15"
+        letter-spacing="4" fill="#B8862E">COLD DRINKS</text>
+</svg>
