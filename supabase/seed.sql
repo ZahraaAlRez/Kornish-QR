@@ -1,33 +1,24 @@
--- Seed data: run after 0001_init.sql. Safe to re-run (uses upserts/guards).
--- NOTE: replace NEXT_PUBLIC_SITE_URL below with your real deployed URL once
--- live — until then these placeholder paths are served from /public/brand
--- by the Next.js app itself.
+-- Optional: re-applies the Sultana Restocafe cafe_settings defaults.
+-- 0002_rebrand_and_i18n.sql already does this as part of the reset, so you
+-- normally don't need to run this separately — it's here as an idempotent
+-- reference if cafe_settings ever needs to be restored to defaults.
 
-insert into cafe_settings (id, cafe_name, logo_url, main_picture_url)
-values (1, 'Cardamom Café', '/brand/logo.svg', '/brand/main-pic-placeholder.svg')
-on conflict (id) do nothing;
+insert into cafe_settings (
+  id, cafe_name, logo_url, main_picture_url, brand_colors, updated_at
+)
+values (
+  1,
+  'Sultana Restocafe',
+  '/brand/sultana-logo-full-light.png',
+  null,
+  '{"primary":"#1F2B45","accent":"#C8A66A","secondary":"#F4EBDD"}'::jsonb,
+  now()
+)
+on conflict (id) do update set
+  cafe_name = excluded.cafe_name,
+  logo_url = excluded.logo_url,
+  brand_colors = excluded.brand_colors,
+  updated_at = now();
 
-insert into categories (name, animation_key, sort_order)
-select v.name, v.animation_key, v.sort_order
-from (values
-  ('Hot Drinks', 'hot-drinks', 1),
-  ('Cold Drinks', 'cold-drinks', 2),
-  ('Sandwiches', 'sandwiches', 3),
-  ('Desserts', 'desserts', 4)
-) as v(name, animation_key, sort_order)
-where not exists (select 1 from categories where categories.name = v.name);
-
--- Sample menu items, one per category, using the category placeholder
--- image as photo_url until the admin uploads a real photo.
-insert into menu_items (name, description, price, category_id, photo_url, sort_order)
-select v.name, v.description, v.price, c.id, v.photo_url, v.sort_order
-from (values
-  ('Cardamom Latte', 'Espresso, steamed milk, a pinch of cardamom', 3.50, 'Hot Drinks', '/brand/placeholder-hot-drinks.svg', 1),
-  ('Iced Cold Brew', 'Slow-steeped cold brew over ice', 3.75, 'Cold Drinks', '/brand/placeholder-cold-drinks.svg', 1),
-  ('Halloumi Sandwich', 'Grilled halloumi, tomato, pickles, olive bread', 5.25, 'Sandwiches', '/brand/placeholder-sandwiches.svg', 1),
-  ('Chocolate Crepe', 'Warm crepe, chocolate chips, strawberries', 4.50, 'Desserts', '/brand/placeholder-desserts.svg', 1)
-) as v(name, description, price, category_name, photo_url, sort_order)
-join categories c on c.name = v.category_name
-where not exists (
-  select 1 from menu_items where menu_items.name = v.name
-);
+-- categories/menu_items are intentionally left empty — the admin adds
+-- everything from scratch via /admin/menu (spec §12).

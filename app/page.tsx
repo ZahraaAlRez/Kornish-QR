@@ -2,15 +2,25 @@ import { createBrowserClient } from "@/lib/supabase/client";
 import type { Category, MenuItem, CafeSettings } from "@/lib/supabase/types";
 import CustomerApp from "@/components/customer/CustomerApp";
 
+// Without this, Next's fetch Data Cache can serve a stale snapshot of the
+// menu/settings indefinitely (customers ordering items the admin already
+// removed, seeing edits that never arrive) — every admin page already opts
+// out the same way, this one just needs it more.
+export const dynamic = "force-dynamic";
+
 const FALLBACK_SETTINGS: CafeSettings = {
   id: 1,
-  cafe_name: "Cardamom Café",
-  logo_url: "/brand/logo.svg",
-  main_picture_url: "/brand/main-pic-placeholder.svg",
+  cafe_name: "Sultana Restocafe",
+  logo_url: "/brand/sultana-logo-full-light.png",
+  main_picture_url: null,
   whatsapp_number: null,
   external_system_webhook_url: null,
   external_system_api_key: null,
-  brand_colors: { primary: "#2B1B12", accent: "#B8862E", secondary: "#F3ECDC" },
+  brand_colors: { primary: "#1F2B45", accent: "#C8A66A", secondary: "#F4EBDD" },
+  admin_password_hash: null,
+  admin_recovery_email: null,
+  admin_reset_token: null,
+  admin_reset_token_expires_at: null,
   updated_at: new Date().toISOString(),
 };
 
@@ -54,14 +64,14 @@ export default async function HomePage({
 
 function SupabaseNotConfigured() {
   return (
-    <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-espresso p-8 text-center text-cream">
+    <div className="flex min-h-dvh flex-col items-center justify-center gap-4 bg-cream p-8 text-center text-navy">
       <h1 className="font-serif text-2xl italic">Almost there</h1>
-      <p className="max-w-sm text-sm text-cream/80">
+      <p className="max-w-sm text-sm text-navy/70">
         This app needs a Supabase project connected before it can show the menu. Copy{" "}
-        <code className="rounded bg-cream/10 px-1">.env.local.example</code> to{" "}
-        <code className="rounded bg-cream/10 px-1">.env.local</code>, fill in your project&apos;s keys, run the
-        migration + seed SQL in <code className="rounded bg-cream/10 px-1">supabase/</code>, then restart the dev
-        server. See README.md for the full steps.
+        <code className="rounded bg-navy/10 px-1">.env.local.example</code> to{" "}
+        <code className="rounded bg-navy/10 px-1">.env.local</code>, fill in your project&apos;s keys, run the
+        migrations in <code className="rounded bg-navy/10 px-1">supabase/</code>, then restart the dev server. See
+        README.md for the full steps.
       </p>
     </div>
   );

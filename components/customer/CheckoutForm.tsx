@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { motion } from "framer-motion";
+import { useLocale } from "@/lib/i18n/LocaleContext";
 import type { CartLine } from "./cartTypes";
 import { cartTotal } from "./cartTypes";
 import type { OrderType } from "@/lib/supabase/types";
@@ -24,6 +26,7 @@ interface Props {
 }
 
 export default function CheckoutForm({ lines, initialTableNumber, submitting, error, onClose, onSubmit }: Props) {
+  const { t } = useLocale();
   const [orderType, setOrderType] = useState<OrderType>("dine_in");
   const [tableNumber, setTableNumber] = useState(initialTableNumber ?? "");
   const [customerName, setCustomerName] = useState("");
@@ -37,7 +40,7 @@ export default function CheckoutForm({ lines, initialTableNumber, submitting, er
 
   function shareLocation() {
     if (!navigator.geolocation) {
-      setLocationError("Location isn't available on this device/browser.");
+      setLocationError(t("checkout.locationError"));
       return;
     }
     setLocating(true);
@@ -49,7 +52,7 @@ export default function CheckoutForm({ lines, initialTableNumber, submitting, er
         setLocating(false);
       },
       () => {
-        setLocationError("Couldn't get your location. You can still type your address below.");
+        setLocationError(t("checkout.locationError"));
         setLocating(false);
       }
     );
@@ -61,79 +64,87 @@ export default function CheckoutForm({ lines, initialTableNumber, submitting, er
   }
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end bg-espresso/60 sm:items-center sm:justify-center">
-      <form
+    <div className="fixed inset-0 z-40 flex items-end bg-navy-deep/50 backdrop-blur-sm sm:items-center sm:justify-center">
+      <motion.form
+        initial={{ y: "100%", opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: "100%", opacity: 0 }}
+        transition={{ type: "spring", damping: 28, stiffness: 300 }}
         onSubmit={handleSubmit}
-        className="max-h-[90vh] w-full overflow-y-auto rounded-t-3xl bg-white p-5 pb-8 sm:max-w-md sm:rounded-3xl"
+        className="max-h-[90vh] w-full overflow-y-auto rounded-t-3xl bg-cream p-5 pb-8 sm:max-w-md sm:rounded-3xl"
       >
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="font-serif text-xl italic">Checkout</h2>
-          <button type="button" onClick={onClose} className="text-2xl leading-none text-espresso-light">
+          <h2 className="font-serif text-xl italic text-navy">{t("checkout.title")}</h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="-m-2.5 flex h-11 w-11 items-center justify-center text-2xl leading-none text-navy/50"
+          >
             ×
           </button>
         </div>
 
-        <div className="mb-4 flex rounded-full bg-cream p-1">
+        <div className="mb-4 flex rounded-full bg-navy/5 p-1">
           <button
             type="button"
             onClick={() => setOrderType("dine_in")}
-            className={`flex-1 rounded-full py-2 text-sm font-medium transition ${
-              orderType === "dine_in" ? "bg-espresso text-cream" : "text-espresso-light"
+            className={`min-h-11 flex-1 rounded-full py-2 text-sm font-medium transition ${
+              orderType === "dine_in" ? "bg-gold-gradient text-navy" : "text-navy/60"
             }`}
           >
-            Dine-in
+            {t("checkout.dineIn")}
           </button>
           <button
             type="button"
             onClick={() => setOrderType("delivery")}
-            className={`flex-1 rounded-full py-2 text-sm font-medium transition ${
-              orderType === "delivery" ? "bg-espresso text-cream" : "text-espresso-light"
+            className={`min-h-11 flex-1 rounded-full py-2 text-sm font-medium transition ${
+              orderType === "delivery" ? "bg-gold-gradient text-navy" : "text-navy/60"
             }`}
           >
-            Delivery
+            {t("checkout.delivery")}
           </button>
         </div>
 
         {orderType === "dine_in" ? (
           <div className="space-y-3">
-            <label className="block text-sm font-medium">
-              Table number *
+            <label className="block text-sm font-medium text-navy">
+              {t("checkout.tableNumber")} *
               <input
                 required
                 value={tableNumber}
                 onChange={(e) => setTableNumber(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-gold-light/40 p-2 outline-none focus:border-gold"
+                className="mt-1 w-full min-h-11 rounded-xl border border-gold/30 bg-white p-2 outline-none focus:border-gold"
                 placeholder="e.g. 4"
               />
             </label>
-            <label className="block text-sm font-medium">
-              Name <span className="font-normal text-espresso-light">(optional)</span>
+            <label className="block text-sm font-medium text-navy">
+              {t("checkout.name")} <span className="font-normal text-navy/50">{t("checkout.optional")}</span>
               <input
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-gold-light/40 p-2 outline-none focus:border-gold"
+                className="mt-1 w-full min-h-11 rounded-xl border border-gold/30 bg-white p-2 outline-none focus:border-gold"
               />
             </label>
           </div>
         ) : (
           <div className="space-y-3">
-            <label className="block text-sm font-medium">
-              Name *
+            <label className="block text-sm font-medium text-navy">
+              {t("checkout.name")} *
               <input
                 required
                 value={customerName}
                 onChange={(e) => setCustomerName(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-gold-light/40 p-2 outline-none focus:border-gold"
+                className="mt-1 w-full min-h-11 rounded-xl border border-gold/30 bg-white p-2 outline-none focus:border-gold"
               />
             </label>
-            <label className="block text-sm font-medium">
-              Phone *
+            <label className="block text-sm font-medium text-navy">
+              {t("checkout.phone")} *
               <input
                 required
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="mt-1 w-full rounded-xl border border-gold-light/40 p-2 outline-none focus:border-gold"
+                className="mt-1 w-full min-h-11 rounded-xl border border-gold/30 bg-white p-2 outline-none focus:border-gold"
               />
             </label>
 
@@ -141,19 +152,19 @@ export default function CheckoutForm({ lines, initialTableNumber, submitting, er
               type="button"
               onClick={shareLocation}
               disabled={locating}
-              className="w-full rounded-xl border border-gold bg-gold-light/10 py-2 text-sm font-medium text-gold disabled:opacity-50"
+              className="min-h-11 w-full rounded-xl border border-gold bg-gold/10 py-2 font-ui text-sm font-medium text-terracotta disabled:opacity-50"
             >
-              {locating ? "Getting location…" : deliveryLocationUrl ? "Location shared ✓" : "Share my location"}
+              {locating ? t("checkout.gettingLocation") : deliveryLocationUrl ? t("checkout.locationShared") : t("checkout.shareLocation")}
             </button>
             {locationError && <p className="text-xs text-red-600">{locationError}</p>}
 
-            <label className="block text-sm font-medium">
-              Address <span className="font-normal text-espresso-light">(or as a fallback)</span>
+            <label className="block text-sm font-medium text-navy">
+              {t("checkout.address")} <span className="font-normal text-navy/50">{t("checkout.addressHint")}</span>
               <textarea
                 value={deliveryAddress}
                 onChange={(e) => setDeliveryAddress(e.target.value)}
                 rows={2}
-                className="mt-1 w-full rounded-xl border border-gold-light/40 p-2 outline-none focus:border-gold"
+                className="mt-1 w-full min-h-11 rounded-xl border border-gold/30 bg-white p-2 outline-none focus:border-gold"
               />
             </label>
           </div>
@@ -161,19 +172,21 @@ export default function CheckoutForm({ lines, initialTableNumber, submitting, er
 
         {error && <p className="mt-3 text-sm text-red-600">{error}</p>}
 
-        <div className="mt-5 flex items-center justify-between text-sm font-semibold">
-          <span>Total</span>
+        <div className="mt-5 flex items-center justify-between font-ui text-sm font-semibold text-navy">
+          <span>{t("cart.total")}</span>
           <span>${total.toFixed(2)}</span>
         </div>
 
-        <button
+        <motion.button
+          whileHover={{ scale: 1.02, filter: "brightness(1.06)" }}
+          whileTap={{ scale: 0.98 }}
           type="submit"
           disabled={submitting}
-          className="mt-3 w-full rounded-full bg-espresso py-3 text-sm font-semibold uppercase tracking-wide text-cream disabled:opacity-50"
+          className="mt-3 w-full rounded-full bg-gold-gradient py-3 font-ui text-sm font-semibold uppercase tracking-wide text-navy disabled:opacity-50"
         >
-          {submitting ? "Placing order…" : "Place order"}
-        </button>
-      </form>
+          {submitting ? t("checkout.placingOrder") : t("checkout.placeOrder")}
+        </motion.button>
+      </motion.form>
     </div>
   );
 }

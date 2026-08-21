@@ -8,16 +8,19 @@ export type OrderStatus = "new" | "preparing" | "done";
 // collapsing every table's Insert/Update type to `never`.
 export type Category = {
   id: string;
-  name: string;
-  animation_key: string;
+  name_en: string;
+  name_ar: string | null;
+  photo_url: string | null;
   sort_order: number;
   created_at: string;
 };
 
 export type MenuItem = {
   id: string;
-  name: string;
-  description: string | null;
+  name_en: string;
+  name_ar: string | null;
+  description_en: string | null;
+  description_ar: string | null;
   price: number;
   category_id: string;
   photo_url: string | null;
@@ -66,6 +69,10 @@ export type CafeSettings = {
   external_system_webhook_url: string | null;
   external_system_api_key: string | null;
   brand_colors: BrandColors;
+  admin_password_hash: string | null;
+  admin_recovery_email: string | null;
+  admin_reset_token: string | null;
+  admin_reset_token_expires_at: string | null;
   updated_at: string;
 };
 
