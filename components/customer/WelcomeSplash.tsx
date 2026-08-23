@@ -84,7 +84,14 @@ export default function WelcomeSplash({ onDone }: Props) {
     >
       <video
         ref={videoRef}
-        className="pointer-events-none h-full w-full select-none object-cover"
+        // object-contain, not object-cover: the source footage is a 16:9
+        // landscape frame with the logo and "Welcome to..." text already
+        // spanning most of its width, so on a portrait phone screen `cover`
+        // (which scales to fill both dimensions) crops most of that width
+        // away — cutting the logo and text off at the viewport edges. This
+        // shows the full frame letterboxed against the same navy-deep
+        // background as the rest of the splash, rather than cropping it.
+        className="pointer-events-none h-full w-full select-none object-contain"
         src="/brand/sultana-welcome.mp4"
         poster="/brand/sultana-welcome-poster.jpg"
         muted
