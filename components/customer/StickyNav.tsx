@@ -55,7 +55,6 @@ export default function StickyNav({
   }, [cartCount]);
 
   const barOpacity = useTransform(progress, [0.35, 0.75], [0, 1]);
-  const barBlur = useTransform(barOpacity, (v) => `blur(${v * 14}px)`);
   const logoOpacity = useTransform(progress, [0.5, 0.85], [0, 1]);
   const logoScale = useTransform(progress, [0.5, 0.85], [0.7, 1]);
   const chromeOpacity = useTransform(progress, [0.5, 0.85], [0, 1]);
@@ -64,17 +63,24 @@ export default function StickyNav({
   // invisible element still captures clicks unless pointer-events is turned
   // off — without this, its own (invisible) logo/search/language/cart
   // controls sit on top of and steal clicks from the hero's real ones below.
-  const navPointerEvents = useTransform(progress, (v) => (v > 0.3 ? "auto" : "none"));
+  // Gated on the same [0.5, 0.85] range the logo/search/cart chrome itself
+  // fades in on (not the earlier bar-fill range), so nothing here becomes
+  // clickable before it's actually visible.
+  const navPointerEvents = useTransform(logoOpacity, (o) => (o > 0.02 ? "auto" : "none"));
 
   return (
     <motion.div style={{ pointerEvents: navPointerEvents }} className="fixed inset-x-0 top-0 z-30">
+      {/* A solid (not blurred) fill — an animated backdrop-filter here would force
+          the browser to re-sample everything scrolling underneath this fixed bar
+          on every single frame, which is a classic mobile scroll-jank cause. */}
       <motion.div
         aria-hidden="true"
-        className="absolute inset-0 border-b border-navy/10 bg-ivory/85"
-        style={{ opacity: barOpacity, backdropFilter: barBlur }}
+        className="absolute inset-0 border-b border-navy/10 bg-ivory"
+        style={{ opacity: barOpacity }}
       />
       <div className="relative mx-auto flex max-w-[1180px] items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
         <motion.button
+          type="button"
           onClick={onLogoClick}
           style={{ opacity: logoOpacity, scale: logoScale }}
           className="-m-2 flex h-11 w-11 shrink-0 items-center justify-center"
@@ -99,6 +105,7 @@ export default function StickyNav({
           </div>
           <LanguageToggle variant="light" />
           <button
+            type="button"
             ref={cartButtonRef}
             onClick={onOpenCart}
             className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-navy text-cream"

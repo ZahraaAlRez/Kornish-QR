@@ -25,5 +25,5 @@ export default function PhotoTile({
     return <PlaceholderArt seed={seed ?? alt} categoryHint={categoryHint} className={className} />;
   }
   // eslint-disable-next-line @next/next/no-img-element
-  return <img src={src} alt={alt} className={`object-cover ${className}`} />;
+  return <img src={src} alt={alt} loading="lazy" decoding="async" className={`object-cover ${className}`} />;
 }

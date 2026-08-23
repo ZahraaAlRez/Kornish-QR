@@ -54,7 +54,11 @@ export default function CheckoutForm({ lines, initialTableNumber, submitting, er
       () => {
         setLocationError(t("checkout.locationError"));
         setLocating(false);
-      }
+      },
+      // Without an explicit timeout, an unanswered permission prompt or a
+      // stalled GPS fix leaves the button stuck on "Getting location…"
+      // indefinitely — fail into the address fallback instead.
+      { timeout: 10000, maximumAge: 60000 }
     );
   }
 

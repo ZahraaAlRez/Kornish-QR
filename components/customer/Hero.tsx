@@ -3,6 +3,7 @@
 import { forwardRef, useEffect, useRef, useState } from "react";
 import { motion, useTransform, type MotionValue } from "framer-motion";
 import { useLocale } from "@/lib/i18n/LocaleContext";
+import { INTRO_SEEN_KEY } from "@/lib/introSeen";
 import LanguageToggle from "@/components/LanguageToggle";
 import Footer from "@/components/Footer";
 import HeroMedia from "./HeroMedia";
@@ -14,7 +15,6 @@ interface Props {
   scrollProgress: MotionValue<number>;
 }
 
-const INTRO_SEEN_KEY = "sultana-intro-seen";
 const EASE = [0.22, 1, 0.36, 1] as const;
 const LOGO_ASPECT = "6030 / 5839";
 
@@ -55,11 +55,12 @@ const Hero = forwardRef<HTMLDivElement, Props>(function Hero({ cafeName, onViewM
     const seen = window.sessionStorage.getItem(INTRO_SEEN_KEY) === "1";
     setReturning(seen);
     window.sessionStorage.setItem(INTRO_SEEN_KEY, "1");
-    if (seen) {
-      const timer = setTimeout(() => onViewMenu(), 900);
-      return () => clearTimeout(timer);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // Returning visitors still get the shortened `fast` animation below, but
+    // the page position is never changed by a timer — a delayed
+    // programmatic scroll firing independently of user input raced against
+    // Lenis's own scroll handling, producing a visible "catch, then snap
+    // back" glitch. The menu now only opens from the CTA click or the
+    // customer's own scroll.
   }, []);
 
   // Scroll-out choreography as the customer scrolls from hero into the menu.
@@ -73,13 +74,13 @@ const Hero = forwardRef<HTMLDivElement, Props>(function Hero({ cafeName, onViewM
 
   if (returning === null) {
     // Avoid flashing the full sequence for a frame before sessionStorage resolves.
-    return <div ref={ref} className="relative min-h-dvh w-full bg-ivory" />;
+    return <div ref={ref} className="relative min-h-[100svh] w-full bg-ivory md:min-h-[100dvh]" />;
   }
 
   const fast = returning;
 
   return (
-    <div ref={ref} className="relative min-h-dvh w-full overflow-hidden bg-ivory">
+    <div ref={ref} className="relative min-h-[100svh] w-full overflow-hidden bg-ivory md:min-h-[100dvh]">
       {/* Clean warm ivory base + one restrained sand radial glow — no visible grain dots. */}
       <div
         aria-hidden="true"
@@ -105,7 +106,7 @@ const Hero = forwardRef<HTMLDivElement, Props>(function Hero({ cafeName, onViewM
         <LanguageToggle variant="light" />
       </div>
 
-      <div className="relative z-10 mx-auto flex min-h-dvh w-[min(1180px,calc(100%-48px))] items-center py-20">
+      <div className="relative z-10 mx-auto flex min-h-[100svh] w-[min(1180px,calc(100%-48px))] items-center py-20 md:min-h-[100dvh]">
         <motion.div
           style={{ opacity: contentOpacity, y: contentY }}
           className="grid w-full grid-cols-1 items-center gap-10 lg:grid-cols-2 lg:gap-16"

@@ -59,7 +59,7 @@ const MenuBrowser = forwardRef<HTMLDivElement, Props>(function MenuBrowser(
       whileInView={{ y: 0 }}
       viewport={{ once: true, amount: 0.1 }}
       transition={{ duration: 0.7, ease: EASE }}
-      className="relative z-10 -mt-8 flex min-h-dvh flex-col rounded-t-[2.5rem] bg-cream pt-16 shadow-[0_-24px_48px_rgba(31,43,69,0.10)]"
+      className="relative z-10 -mt-8 flex min-h-[100svh] flex-col rounded-t-[2.5rem] bg-cream pt-16 shadow-[0_-24px_48px_rgba(31,43,69,0.10)] md:min-h-[100dvh]"
     >
       <motion.div
         aria-hidden="true"

@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AnimatePresence, animate, motion, useScroll } from "framer-motion";
+import { AnimatePresence, motion, useScroll } from "framer-motion";
 import type { Category, MenuItem, CafeSettings } from "@/lib/supabase/types";
 import { useLocale } from "@/lib/i18n/LocaleContext";
+import { SPLASH_SEEN_KEY } from "@/lib/introSeen";
+import { useLenis } from "@/components/motion/LenisProvider";
 import { submitOrder } from "@/app/actions/orders";
 import type { CheckoutValues } from "./CheckoutForm";
 import type { CartLine } from "./cartTypes";
@@ -16,6 +18,7 @@ import CartDrawer from "./CartDrawer";
 import CheckoutForm from "./CheckoutForm";
 import OrderConfirmation from "./OrderConfirmation";
 import FlyingPhoto from "./FlyingPhoto";
+import WelcomeSplash from "./WelcomeSplash";
 
 type Modal = "item" | "cart" | "checkout" | "confirmation" | null;
 
@@ -28,6 +31,7 @@ interface Props {
 
 export default function CustomerApp({ categories, menuItems, cafeSettings, initialTableNumber }: Props) {
   const { locale } = useLocale();
+  const lenis = useLenis();
   const [modal, setModal] = useState<Modal>(null);
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(categories[0]?.id ?? null);
   const [selectedItem, setSelectedItem] = useState<MenuItem | null>(null);
@@ -47,6 +51,28 @@ export default function CustomerApp({ categories, menuItems, cafeSettings, initi
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
 
   const cartCount = useMemo(() => cartLines.reduce((sum, l) => sum + l.quantity, 0), [cartLines]);
+
+  // Splash uses its own session flag, separate from Hero's — Hero only
+  // mounts once this phase reaches "ready" (never during "splash"), so on a
+  // genuine first visit Hero's own returning-visitor flag is still unset
+  // when it mounts and its full entrance animation plays normally after the
+  // splash hands off. On a same-session reload both the splash and Hero's
+  // animation are skipped, since both flags are already set from earlier.
+  const [visitPhase, setVisitPhase] = useState<"pending" | "splash" | "ready">("pending");
+  const introChecked = useRef(false);
+
+  useEffect(() => {
+    if (introChecked.current) return;
+    introChecked.current = true;
+    const seen = window.sessionStorage.getItem(SPLASH_SEEN_KEY) === "1";
+    if (seen) {
+      setVisitPhase("ready");
+      return;
+    }
+    window.sessionStorage.setItem(SPLASH_SEEN_KEY, "1");
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    setVisitPhase(reduceMotion ? "ready" : "splash");
+  }, []);
 
   // Hydrate cart from localStorage on mount, dropping any line whose menu
   // item no longer exists (stale reference from before a menu reset).
@@ -79,24 +105,32 @@ export default function CustomerApp({ categories, menuItems, cafeSettings, initi
     return () => clearTimeout(timer);
   }, [locale]);
 
-  // Framer Motion-driven scroll (not scrollIntoView) so the hero/nav
-  // scroll-progress choreography above stays the single source of truth
-  // for the transition's easing.
-  function scrollToY(targetY: number) {
-    animate(window.scrollY, targetY, {
-      duration: 1,
-      ease: [0.22, 1, 0.36, 1],
-      onUpdate: (v) => window.scrollTo(0, v),
-    });
-  }
-
+  // Routed through the single site-wide Lenis instance (never a second,
+  // competing scroll driver) so this and the hero/nav scroll-progress
+  // choreography above are reading the same scroll position, not two
+  // systems independently fighting to own it. On touch devices Lenis is
+  // intentionally never created (see LenisProvider), so these fall back to
+  // an immediate native jump rather than a native `smooth` animation that
+  // would itself become a second competing scroll driver.
   function scrollToMenu() {
     if (!menuRef.current) return;
-    scrollToY(menuRef.current.getBoundingClientRect().top + window.scrollY);
+    if (lenis) {
+      lenis.scrollTo(menuRef.current, {
+        offset: -72,
+        duration: 1.05,
+        easing: (t: number) => 1 - Math.pow(1 - t, 4),
+      });
+    } else {
+      menuRef.current.scrollIntoView();
+    }
   }
 
   function scrollToTop() {
-    scrollToY(0);
+    if (lenis) {
+      lenis.scrollTo(heroRef.current ?? 0, { offset: 0, duration: 1 });
+    } else {
+      heroRef.current?.scrollIntoView();
+    }
   }
 
   function handleSelectItem(item: MenuItem) {
@@ -206,20 +240,24 @@ export default function CustomerApp({ categories, menuItems, cafeSettings, initi
         }}
       />
 
-      <div className={`transition-all duration-200 ${fading ? "translate-y-1 opacity-0" : "translate-y-0 opacity-100"}`}>
-        <Hero ref={heroRef} cafeName={cafeSettings.cafe_name} onViewMenu={scrollToMenu} scrollProgress={scrollYProgress} />
+      {visitPhase === "ready" && (
+        <div className={`transition-all duration-200 ${fading ? "translate-y-1 opacity-0" : "translate-y-0 opacity-100"}`}>
+          <Hero ref={heroRef} cafeName={cafeSettings.cafe_name} onViewMenu={scrollToMenu} scrollProgress={scrollYProgress} />
 
-        <MenuBrowser
-          ref={menuRef}
-          categories={categories}
-          menuItems={menuItems}
-          activeCategoryId={activeCategoryId}
-          onSelectCategory={setActiveCategoryId}
-          onSelectItem={handleSelectItem}
-          onQuickAdd={handleQuickAdd}
-          searchQuery={searchQuery}
-        />
-      </div>
+          <MenuBrowser
+            ref={menuRef}
+            categories={categories}
+            menuItems={menuItems}
+            activeCategoryId={activeCategoryId}
+            onSelectCategory={setActiveCategoryId}
+            onSelectItem={handleSelectItem}
+            onQuickAdd={handleQuickAdd}
+            searchQuery={searchQuery}
+          />
+        </div>
+      )}
+
+      {visitPhase === "splash" && <WelcomeSplash onDone={() => setVisitPhase("ready")} />}
 
       {flight && <FlyingPhoto src={flight.src} from={flight.from} to={flight.to} onComplete={() => setFlight(null)} />}
 
