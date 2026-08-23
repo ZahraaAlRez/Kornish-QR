@@ -10,6 +10,7 @@ const strings = {
   "hero.tagline": { en: "Scan · Browse · Order", ar: "امسح · تصفح · اطلب" },
   "hero.cta": { en: "View Menu", ar: "عرض القائمة" },
   "hero.swipeUp": { en: "Swipe up to explore", ar: "مرر لأعلى للاستكشاف" },
+  "splash.skip": { en: "Skip", ar: "تخطي" },
 
   "menu.title": { en: "Our Menu", ar: "قائمتنا" },
   "menu.cartView": { en: "View cart", ar: "عرض السلة" },
@@ -64,6 +65,11 @@ const strings = {
   "loading.menu": { en: "Loading menu…", ar: "جارٍ تحميل القائمة…" },
 
   "footer.poweredBy": { en: "Powered by NEXERA", ar: "بدعم من NEXERA" },
+  "footer.poweredByShort": { en: "Powered by", ar: "بدعم من" },
+  "footer.instagramAriaLabel": {
+    en: "Powered by NEXERA — visit their Instagram page (opens in a new tab)",
+    ar: "بدعم من NEXERA — زيارة صفحتهم على إنستغرام (يفتح في تبويب جديد)",
+  },
 
   "admin.subtitle": { en: "Sultana Restocafe — Admin", ar: "مطعم سلطانة — لوحة التحكم" },
   "admin.dashboardTitle": { en: "Admin", ar: "لوحة التحكم" },
