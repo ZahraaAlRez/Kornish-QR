@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useLocale } from "@/lib/i18n/LocaleContext";
+import { useCurrency } from "@/lib/currency/CurrencyContext";
 import type { CartLine } from "./cartTypes";
 import { cartTotal } from "./cartTypes";
 import type { OrderType } from "@/lib/supabase/types";
@@ -27,6 +28,7 @@ interface Props {
 
 export default function CheckoutForm({ lines, initialTableNumber, submitting, error, onClose, onSubmit }: Props) {
   const { t } = useLocale();
+  const { currency, toggleCurrency, formatPrice } = useCurrency();
   const [orderType, setOrderType] = useState<OrderType>("dine_in");
   const [tableNumber, setTableNumber] = useState(initialTableNumber ?? "");
   const [customerName, setCustomerName] = useState("");
@@ -178,7 +180,19 @@ export default function CheckoutForm({ lines, initialTableNumber, submitting, er
 
         <div className="mt-5 flex items-center justify-between font-ui text-sm font-semibold text-navy">
           <span>{t("cart.total")}</span>
-          <span>${total.toFixed(2)}</span>
+          <span className="flex items-center gap-1.5">
+            {formatPrice(total)}
+            <button
+              type="button"
+              onClick={toggleCurrency}
+              aria-label={currency === "USD" ? "Switch to Lebanese Lira" : "Switch to US Dollar"}
+              className="group -mx-3 -mb-1 -mt-4 flex h-11 w-11 shrink-0 items-center justify-center"
+            >
+              <span className="inline-flex items-center rounded-full bg-gold/15 px-1.5 py-0.5 font-ui text-[9px] font-bold uppercase tracking-wide text-terracotta transition-colors group-hover:bg-gold/30 group-active:bg-gold/40">
+                {currency}
+              </span>
+            </button>
+          </span>
         </div>
 
         <motion.button

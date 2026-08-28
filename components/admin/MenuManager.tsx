@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { Category, MenuItem } from "@/lib/supabase/types";
 import { useLocale } from "@/lib/i18n/LocaleContext";
 import PhotoTile from "@/components/PhotoTile";
+import { translateText } from "@/app/actions/translate";
 import {
   saveMenuItem,
   deleteMenuItem,
@@ -11,6 +12,7 @@ import {
   saveCategory,
   updateCategory,
   deleteCategory,
+  backfillMissingTranslations,
 } from "@/app/admin/(dashboard)/menu/actions";
 
 interface Props {
@@ -23,6 +25,21 @@ export default function MenuManager({ categories, menuItems }: Props) {
   const [editingItem, setEditingItem] = useState<MenuItem | "new" | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [addingCategory, setAddingCategory] = useState(false);
+  const [newCategoryNameEn, setNewCategoryNameEn] = useState("");
+  const [newCategoryNameAr, setNewCategoryNameAr] = useState("");
+  const [backfilling, setBackfilling] = useState(false);
+  const [backfillResult, setBackfillResult] = useState<{ items: number; categories: number } | null>(null);
+
+  async function handleBackfill() {
+    setBackfilling(true);
+    setBackfillResult(null);
+    try {
+      const result = await backfillMissingTranslations();
+      setBackfillResult(result);
+    } finally {
+      setBackfilling(false);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -34,6 +51,26 @@ export default function MenuManager({ categories, menuItems }: Props) {
         >
           {t("admin.menu.addItem")}
         </button>
+      </div>
+
+      <div>
+        <button
+          onClick={handleBackfill}
+          disabled={backfilling}
+          className="flex min-h-11 items-center rounded-full border border-gold/50 px-4 text-xs font-semibold uppercase tracking-wide text-bronze disabled:opacity-50"
+        >
+          {backfilling ? t("admin.menu.translateMissingRunning") : t("admin.menu.translateMissing")}
+        </button>
+        {backfillResult && (
+          <p className="mt-1.5 text-xs text-navy/60">
+            {backfillResult.items === 0 && backfillResult.categories === 0
+              ? pick("Everything already has Arabic.", "كل شيء مترجم بالفعل.")
+              : pick(
+                  `Translated ${backfillResult.items} item(s) and ${backfillResult.categories} categor${backfillResult.categories === 1 ? "y" : "ies"}.`,
+                  `تمت ترجمة ${backfillResult.items} عنصرًا و${backfillResult.categories} قسمًا.`
+                )}
+          </p>
+        )}
       </div>
 
       {categories.map((category) => {
@@ -97,12 +134,34 @@ export default function MenuManager({ categories, menuItems }: Props) {
           action={async (formData) => {
             await saveCategory(formData);
             setAddingCategory(false);
+            setNewCategoryNameEn("");
+            setNewCategoryNameAr("");
           }}
           className="space-y-2 rounded-2xl bg-white p-3 shadow-card"
         >
           <p className="text-xs text-navy/50">{t("admin.menu.arabicOptionalHint")}</p>
-          <input name="nameEn" required placeholder={t("admin.menu.nameEn")} className="w-full rounded-lg border border-gold/30 p-2 text-sm" />
-          <input name="nameAr" dir="rtl" placeholder={t("admin.menu.nameAr")} className="w-full rounded-lg border border-gold/30 p-2 text-sm" />
+          <div className="flex items-center gap-2">
+            <input
+              name="nameEn"
+              required
+              value={newCategoryNameEn}
+              onChange={(e) => setNewCategoryNameEn(e.target.value)}
+              placeholder={t("admin.menu.nameEn")}
+              className="w-full flex-1 rounded-lg border border-gold/30 p-2 text-sm"
+            />
+            <TranslateButton getSource={() => newCategoryNameEn} from="en" to="ar" onResult={setNewCategoryNameAr} />
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              name="nameAr"
+              dir="rtl"
+              value={newCategoryNameAr}
+              onChange={(e) => setNewCategoryNameAr(e.target.value)}
+              placeholder={t("admin.menu.nameAr")}
+              className="w-full flex-1 rounded-lg border border-gold/30 p-2 text-sm"
+            />
+            <TranslateButton getSource={() => newCategoryNameAr} from="ar" to="en" onResult={setNewCategoryNameEn} />
+          </div>
           <PhotoField label={t("admin.menu.categoryPhoto")} currentUrl={null} />
           <input type="hidden" name="sortOrder" value={categories.length + 1} />
           <div className="flex gap-2">
@@ -160,6 +219,62 @@ function PhotoField({ label, currentUrl }: { label: string; currentUrl: string |
   );
 }
 
+/**
+ * Sits between a language pair's two fields — pulls whichever one currently
+ * has text, translates it into the other, and fills that field in. The
+ * admin can still freely edit the result (or overwrite it by typing) before
+ * saving, so a slightly-off machine translation is never the final word.
+ */
+function TranslateButton({
+  getSource,
+  from,
+  to,
+  onResult,
+}: {
+  getSource: () => string;
+  from: "en" | "ar";
+  to: "en" | "ar";
+  onResult: (text: string) => void;
+}) {
+  const { t } = useLocale();
+  const [loading, setLoading] = useState(false);
+  const [failed, setFailed] = useState(false);
+
+  async function handleClick() {
+    const source = getSource().trim();
+    if (!source || loading) return;
+    setLoading(true);
+    setFailed(false);
+    try {
+      const result = await translateText(source, from, to);
+      onResult(result);
+    } catch {
+      setFailed(true);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleClick}
+      disabled={loading}
+      aria-label={to === "ar" ? t("admin.menu.translateToAr") : t("admin.menu.translateToEn")}
+      title={failed ? t("admin.menu.translateFailed") : undefined}
+      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full border text-sm transition disabled:opacity-50 ${
+        failed ? "border-red-300 text-red-500" : "border-gold/40 text-bronze hover:bg-gold/10"
+      }`}
+    >
+      {loading ? (
+        <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-bronze/30 border-t-bronze" />
+      ) : (
+        "⇄"
+      )}
+    </button>
+  );
+}
+
 function ItemFormModal({
   item,
   categories,
@@ -175,6 +290,10 @@ function ItemFormModal({
   // machine) regardless of the page's own language — a controlled text
   // input sidesteps that entirely and guarantees plain ASCII digits.
   const [price, setPrice] = useState(item?.price != null ? String(item.price) : "");
+  const [nameEn, setNameEn] = useState(item?.name_en ?? "");
+  const [nameAr, setNameAr] = useState(item?.name_ar ?? "");
+  const [descriptionEn, setDescriptionEn] = useState(item?.description_en ?? "");
+  const [descriptionAr, setDescriptionAr] = useState(item?.description_ar ?? "");
 
   return (
     <div className="fixed inset-0 z-30 flex items-end bg-navy-deep/60 sm:items-center sm:justify-center" onClick={onClose}>
@@ -193,10 +312,51 @@ function ItemFormModal({
         <p className="mb-2 text-xs text-navy/50">{t("admin.menu.arabicOptionalHint")}</p>
 
         <div className="space-y-3">
-          <input name="nameEn" required defaultValue={item?.name_en} placeholder={t("admin.menu.nameEn")} className="w-full rounded-lg border border-gold/30 p-2 text-sm" />
-          <input name="nameAr" dir="rtl" defaultValue={item?.name_ar ?? ""} placeholder={t("admin.menu.nameAr")} className="w-full rounded-lg border border-gold/30 p-2 text-sm" />
-          <textarea name="descriptionEn" defaultValue={item?.description_en ?? ""} placeholder={t("admin.menu.descriptionEn")} rows={2} className="w-full rounded-lg border border-gold/30 p-2 text-sm" />
-          <textarea name="descriptionAr" dir="rtl" defaultValue={item?.description_ar ?? ""} placeholder={t("admin.menu.descriptionAr")} rows={2} className="w-full rounded-lg border border-gold/30 p-2 text-sm" />
+          <div className="flex items-center gap-2">
+            <input
+              name="nameEn"
+              required
+              value={nameEn}
+              onChange={(e) => setNameEn(e.target.value)}
+              placeholder={t("admin.menu.nameEn")}
+              className="w-full flex-1 rounded-lg border border-gold/30 p-2 text-sm"
+            />
+            <TranslateButton getSource={() => nameEn} from="en" to="ar" onResult={setNameAr} />
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              name="nameAr"
+              dir="rtl"
+              value={nameAr}
+              onChange={(e) => setNameAr(e.target.value)}
+              placeholder={t("admin.menu.nameAr")}
+              className="w-full flex-1 rounded-lg border border-gold/30 p-2 text-sm"
+            />
+            <TranslateButton getSource={() => nameAr} from="ar" to="en" onResult={setNameEn} />
+          </div>
+          <div className="flex items-center gap-2">
+            <textarea
+              name="descriptionEn"
+              value={descriptionEn}
+              onChange={(e) => setDescriptionEn(e.target.value)}
+              placeholder={t("admin.menu.descriptionEn")}
+              rows={2}
+              className="w-full flex-1 rounded-lg border border-gold/30 p-2 text-sm"
+            />
+            <TranslateButton getSource={() => descriptionEn} from="en" to="ar" onResult={setDescriptionAr} />
+          </div>
+          <div className="flex items-center gap-2">
+            <textarea
+              name="descriptionAr"
+              dir="rtl"
+              value={descriptionAr}
+              onChange={(e) => setDescriptionAr(e.target.value)}
+              placeholder={t("admin.menu.descriptionAr")}
+              rows={2}
+              className="w-full flex-1 rounded-lg border border-gold/30 p-2 text-sm"
+            />
+            <TranslateButton getSource={() => descriptionAr} from="ar" to="en" onResult={setDescriptionEn} />
+          </div>
           <input
             name="price"
             type="text"
@@ -238,6 +398,8 @@ function ItemFormModal({
 
 function CategoryFormModal({ category, onClose }: { category: Category; onClose: () => void }) {
   const { t } = useLocale();
+  const [nameEn, setNameEn] = useState(category.name_en);
+  const [nameAr, setNameAr] = useState(category.name_ar ?? "");
 
   return (
     <div className="fixed inset-0 z-30 flex items-end bg-navy-deep/60 sm:items-center sm:justify-center" onClick={onClose}>
@@ -254,20 +416,28 @@ function CategoryFormModal({ category, onClose }: { category: Category; onClose:
         <p className="mb-2 text-xs text-navy/50">{t("admin.menu.arabicOptionalHint")}</p>
 
         <div className="space-y-3">
-          <input
-            name="nameEn"
-            required
-            defaultValue={category.name_en}
-            placeholder={t("admin.menu.nameEn")}
-            className="w-full rounded-lg border border-gold/30 p-2 text-sm"
-          />
-          <input
-            name="nameAr"
-            dir="rtl"
-            defaultValue={category.name_ar ?? ""}
-            placeholder={t("admin.menu.nameAr")}
-            className="w-full rounded-lg border border-gold/30 p-2 text-sm"
-          />
+          <div className="flex items-center gap-2">
+            <input
+              name="nameEn"
+              required
+              value={nameEn}
+              onChange={(e) => setNameEn(e.target.value)}
+              placeholder={t("admin.menu.nameEn")}
+              className="w-full flex-1 rounded-lg border border-gold/30 p-2 text-sm"
+            />
+            <TranslateButton getSource={() => nameEn} from="en" to="ar" onResult={setNameAr} />
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              name="nameAr"
+              dir="rtl"
+              value={nameAr}
+              onChange={(e) => setNameAr(e.target.value)}
+              placeholder={t("admin.menu.nameAr")}
+              className="w-full flex-1 rounded-lg border border-gold/30 p-2 text-sm"
+            />
+            <TranslateButton getSource={() => nameAr} from="ar" to="en" onResult={setNameEn} />
+          </div>
           <PhotoField label={t("admin.menu.categoryPhoto")} currentUrl={category.photo_url} />
         </div>
 

@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useLocale } from "@/lib/i18n/LocaleContext";
+import { useCurrency } from "@/lib/currency/CurrencyContext";
 import PhotoTile from "@/components/PhotoTile";
 import AnimatedNumber from "@/components/AnimatedNumber";
 import type { CartLine } from "./cartTypes";
@@ -16,8 +17,38 @@ interface Props {
   onCheckout: () => void;
 }
 
+/** Small "USD"/"LBP" tag — `formatPrice` already appends the $/LL symbol to
+ * each number, but this makes the *selected currency itself* a distinct,
+ * unmissable label rather than something to notice only by reading the
+ * suffix on a price. Doubles as the toggle itself: tapping it switches
+ * currency immediately, right where the customer is already looking, rather
+ * than sending them back up to the nav toggle. The visible pill stays small
+ * to fit inline with the price text, but the actual tap target is a full
+ * 44×44 box (negative margin pulls it back in visually, same trick as the
+ * drawer's own × close button) so it's still comfortably tappable. The
+ * margin is asymmetric, not uniform: generous above/left/right where the
+ * extra hit area only reaches non-interactive text, but only a few px below
+ * — directly under the per-item tag sits the notes input, and under the
+ * total-line tag sits the checkout button, and the full 12px pull there
+ * would let the enlarged target actually steal taps meant for either. */
+function CurrencyTag({ currency, onToggle }: { currency: "USD" | "LBP"; onToggle: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-label={currency === "USD" ? "Switch to Lebanese Lira" : "Switch to US Dollar"}
+      className="group -mx-3 -mb-1 -mt-4 flex h-11 w-11 shrink-0 items-center justify-center"
+    >
+      <span className="inline-flex items-center rounded-full bg-gold/15 px-1.5 py-0.5 font-ui text-[9px] font-bold uppercase tracking-wide text-terracotta transition-colors group-hover:bg-gold/30 group-active:bg-gold/40">
+        {currency}
+      </span>
+    </button>
+  );
+}
+
 export default function CartDrawer({ lines, onClose, onUpdateQuantity, onUpdateNotes, onRemove, onCheckout }: Props) {
   const { t, pick } = useLocale();
+  const { currency, toggleCurrency, formatPrice } = useCurrency();
   const total = cartTotal(lines);
 
   return (
@@ -57,7 +88,10 @@ export default function CartDrawer({ lines, onClose, onUpdateQuantity, onUpdateN
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <p className="font-ui text-sm font-semibold text-navy">{pick(line.nameEn, line.nameAr)}</p>
-                        <p className="font-ui text-xs text-terracotta">${line.price.toFixed(2)}</p>
+                        <p className="mt-0.5 flex items-center gap-1.5 font-ui text-xs font-semibold text-terracotta">
+                          {formatPrice(line.price)}
+                          <CurrencyTag currency={currency} onToggle={toggleCurrency} />
+                        </p>
                       </div>
                       <button
                         onClick={() => onRemove(line.key)}
@@ -90,7 +124,7 @@ export default function CartDrawer({ lines, onClose, onUpdateQuantity, onUpdateN
                           +
                         </button>
                       </div>
-                      <span className="font-ui text-sm font-semibold text-navy">${(line.price * line.quantity).toFixed(2)}</span>
+                      <span className="font-ui text-sm font-semibold text-navy">{formatPrice(line.price * line.quantity)}</span>
                     </div>
                   </div>
                 </motion.div>
@@ -102,7 +136,10 @@ export default function CartDrawer({ lines, onClose, onUpdateQuantity, onUpdateN
         <div className="mt-4 border-t border-navy/10 pt-4">
           <div className="mb-3 flex items-center justify-between font-ui text-sm font-semibold text-navy">
             <span>{t("cart.total")}</span>
-            <AnimatedNumber value={total} />
+            <span className="flex items-center gap-1.5">
+              <AnimatedNumber value={total} format={formatPrice} />
+              <CurrencyTag currency={currency} onToggle={toggleCurrency} />
+            </span>
           </div>
           <motion.button
             whileHover={lines.length ? { scale: 1.02, filter: "brightness(1.06)" } : undefined}

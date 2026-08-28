@@ -73,6 +73,8 @@ export type CafeSettings = {
   admin_recovery_email: string | null;
   admin_reset_token: string | null;
   admin_reset_token_expires_at: string | null;
+  /** How many Lebanese Lira equal 1 USD, for the customer-facing currency toggle. */
+  usd_to_lbp_rate: number;
   updated_at: string;
 };
 

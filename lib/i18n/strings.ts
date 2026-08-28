@@ -11,6 +11,7 @@ const strings = {
   "hero.cta": { en: "View Menu", ar: "عرض القائمة" },
   "hero.swipeUp": { en: "Swipe up to explore", ar: "مرر لأعلى للاستكشاف" },
   "splash.skip": { en: "Skip", ar: "تخطي" },
+  "splash.welcome": { en: "Sultana welcomes you", ar: "سلطانة ترحب بكم" },
 
   "menu.title": { en: "Our Menu", ar: "قائمتنا" },
   "menu.cartView": { en: "View cart", ar: "عرض السلة" },
@@ -64,8 +65,7 @@ const strings = {
 
   "loading.menu": { en: "Loading menu…", ar: "جارٍ تحميل القائمة…" },
 
-  "footer.poweredBy": { en: "Powered by NEXERA", ar: "بدعم من NEXERA" },
-  "footer.poweredByShort": { en: "Powered by", ar: "بدعم من" },
+  "footer.poweredBy": { en: "Powered By:", ar: "بدعم من:" },
   "footer.instagramAriaLabel": {
     en: "Powered by NEXERA — visit their Instagram page (opens in a new tab)",
     ar: "بدعم من NEXERA — زيارة صفحتهم على إنستغرام (يفتح في تبويب جديد)",
@@ -107,7 +107,15 @@ const strings = {
   "admin.menu.category": { en: "Category", ar: "القسم" },
   "admin.menu.photo": { en: "Photo", ar: "الصورة" },
   "admin.menu.categoryPhoto": { en: "Category banner photo", ar: "صورة غلاف القسم" },
-  "admin.menu.arabicOptionalHint": { en: "English required, Arabic optional", ar: "الإنجليزي مطلوب، العربي اختياري" },
+  "admin.menu.arabicOptionalHint": {
+    en: "English required — tap ⇄ to auto-translate, or type your own",
+    ar: "الإنجليزي مطلوب — اضغط ⇄ للترجمة التلقائية، أو اكتب ترجمتك الخاصة",
+  },
+  "admin.menu.translateToAr": { en: "Translate to Arabic", ar: "ترجمة إلى العربية" },
+  "admin.menu.translateToEn": { en: "Translate to English", ar: "ترجمة إلى الإنجليزية" },
+  "admin.menu.translateFailed": { en: "Translation failed — try again or type it yourself", ar: "فشلت الترجمة — أعد المحاولة أو اكتبها بنفسك" },
+  "admin.menu.translateMissing": { en: "Translate missing Arabic", ar: "ترجمة العربي الناقص" },
+  "admin.menu.translateMissingRunning": { en: "Translating…", ar: "جارٍ الترجمة…" },
 
   "admin.orders.wholeMonth": { en: "Whole month", ar: "الشهر كاملاً" },
   "admin.orders.day": { en: "Day", ar: "اليوم" },
@@ -133,6 +141,11 @@ const strings = {
   "admin.settings.webhookUrl": { en: "Cafe system webhook URL", ar: "رابط ربط نظام المقهى" },
   "admin.settings.webhookHint": { en: "(optional, fill in once chosen)", ar: "(اختياري، يُملأ لاحقًا)" },
   "admin.settings.apiKey": { en: "Cafe system API key", ar: "مفتاح API لنظام المقهى" },
+  "admin.settings.usdToLbpRate": { en: "USD to LBP rate", ar: "سعر صرف الدولار مقابل الليرة" },
+  "admin.settings.usdToLbpRateHint": {
+    en: "(how many LL equal $1 — controls the customer currency toggle)",
+    ar: "(كم ليرة تعادل دولارًا واحدًا — يتحكم بمبدّل العملة لدى الزبائن)",
+  },
   "admin.settings.primaryColor": { en: "Primary", ar: "اللون الأساسي" },
   "admin.settings.accentColor": { en: "Accent", ar: "لون التمييز" },
   "admin.settings.secondaryColor": { en: "Secondary", ar: "اللون الثانوي" },

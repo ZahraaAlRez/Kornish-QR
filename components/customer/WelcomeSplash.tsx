@@ -3,33 +3,27 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { useLocale } from "@/lib/i18n/LocaleContext";
+import { Ribbons } from "./Hero";
 
 interface Props {
   onDone: () => void;
 }
 
-// Safety net in case the video never fires `onEnded`/`onError` (e.g. a
-// stalled network request that never resolves either way) — the splash must
-// never be able to block the site from becoming usable. This starting value
-// is intentionally generous (well beyond the video's actual ~8s length) so
-// it only ever acts as a true stall guard; once the video's real duration is
-// known (`onLoadedMetadata`), the timer below is replaced with one sized to
-// that duration instead, so a successful, slow-to-end playback is never cut
-// short by a fixed timeout tuned for a different video length.
-const INITIAL_FAILSAFE_MS = 15000;
-const END_BUFFER_MS = 1500;
+const DISPLAY_MS = 2300;
+const EASE = [0.22, 1, 0.36, 1] as const;
 
 /**
- * First-visit-only intro splash — plays once before the hero reveal, then
- * hands off. Mounting this component at all already implies "first visit,
- * motion allowed" (CustomerApp decides that before rendering it), so this
- * component's only job is: play, and always eventually call `onDone`. The
- * video file has no audio track, so playback is simply muted — no unmute
- * affordance needed.
+ * First-visit-only intro splash — a brief animated text reveal shown before
+ * the hero, reusing its ivory/gold-ribbon background and entrance-motion
+ * style so the handoff feels like one continuous piece. Replaces an earlier
+ * video-based splash: autoplaying video decode on iOS Safari was the prime
+ * suspect for repeated native "a problem occurred" crash reports there, and
+ * this component now does no video decode, no media events, nothing beyond
+ * a single Framer Motion text animation and a fixed timer — eliminating
+ * that whole class of risk by construction rather than trying to tune it.
  */
 export default function WelcomeSplash({ onDone }: Props) {
   const { t } = useLocale();
-  const videoRef = useRef<HTMLVideoElement>(null);
   const done = useRef(false);
   const [visible, setVisible] = useState(true);
 
@@ -42,31 +36,8 @@ export default function WelcomeSplash({ onDone }: Props) {
   }
 
   useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    let failsafe = setTimeout(finish, INITIAL_FAILSAFE_MS);
-
-    // Once the real duration is known, retarget the failsafe to that length
-    // (plus a small buffer) instead of the generous initial guess — keeps it
-    // a true stall guard rather than a fixed cutoff that could clip a longer
-    // video's ending before `onEnded` naturally fires.
-    function onLoadedMetadata() {
-      if (!video || !Number.isFinite(video.duration)) return;
-      clearTimeout(failsafe);
-      failsafe = setTimeout(finish, video.duration * 1000 + END_BUFFER_MS);
-    }
-    video.addEventListener("loadedmetadata", onLoadedMetadata);
-
-    // Autoplay can still fail even when muted on some locked-down mobile
-    // browsers/webviews — if the play() promise rejects, don't leave the
-    // customer staring at a frozen poster frame with no video.
-    video.play().catch(finish);
-
-    return () => {
-      clearTimeout(failsafe);
-      video.removeEventListener("loadedmetadata", onLoadedMetadata);
-    };
+    const timer = setTimeout(finish, DISPLAY_MS);
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -80,32 +51,69 @@ export default function WelcomeSplash({ onDone }: Props) {
       // invisibly fading out — it's fully unmounted 350ms later regardless
       // (see `finish()`), but this closes the gap for that whole window.
       style={{ pointerEvents: visible ? "auto" : "none" }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-navy-deep"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-ivory"
     >
-      <video
-        ref={videoRef}
-        // object-contain, not object-cover: the source footage is a 16:9
-        // landscape frame with the logo and "Welcome to..." text already
-        // spanning most of its width, so on a portrait phone screen `cover`
-        // (which scales to fill both dimensions) crops most of that width
-        // away — cutting the logo and text off at the viewport edges. This
-        // shows the full frame letterboxed against the same navy-deep
-        // background as the rest of the splash, rather than cropping it.
-        className="pointer-events-none h-full w-full select-none object-contain"
-        src="/brand/sultana-welcome.mp4"
-        poster="/brand/sultana-welcome-poster.jpg"
-        muted
-        playsInline
-        autoPlay
-        preload="auto"
-        onEnded={finish}
-        onError={finish}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0"
+        style={{ background: "radial-gradient(circle at 70% 35%, rgba(229,215,195,0.55), transparent 45%)" }}
       />
+      <Ribbons fast={false} />
+
+      <div className="relative z-10 flex flex-col items-center gap-5 px-8 text-center">
+        {/* The same hand-off icon mark Hero itself opens with, so this splash
+            reads as the first beat of one continuous mark reveal rather than
+            a separate screen — one of the few surfaces sparse enough to
+            afford it a moment fully on its own. */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, ease: EASE }}
+          className="logo-mask h-10 w-10 bg-navy sm:h-12 sm:w-12"
+          style={{ maskImage: "url(/brand/sultana-logo-icon.png)", WebkitMaskImage: "url(/brand/sultana-logo-icon.png)" }}
+          role="img"
+          aria-label=""
+        />
+
+        {/* Both lines are fixed bilingual copy, not `t("splash.welcome")` —
+            this splash always shows English-then-Arabic together regardless
+            of the site's currently chosen language, so it can't route
+            through the locale-swapped translation (which would render the
+            Arabic string here too, duplicating the line below). */}
+        <motion.p
+          initial={{ opacity: 0, y: 18, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.7, ease: EASE, delay: 0.15 }}
+          className="font-serif text-4xl italic text-navy sm:text-5xl"
+          dir="ltr"
+        >
+          Sultana welcomes you
+        </motion.p>
+
+        <motion.div
+          initial={{ opacity: 0, scaleX: 0 }}
+          animate={{ opacity: 0.6, scaleX: 1 }}
+          transition={{ duration: 0.5, ease: EASE, delay: 0.55 }}
+          className="h-px w-16 bg-gold"
+          aria-hidden="true"
+        />
+
+        <motion.p
+          initial={{ opacity: 0, y: 14, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          transition={{ duration: 0.7, ease: EASE, delay: 0.65 }}
+          className="text-2xl text-navy/90 sm:text-3xl"
+          style={{ fontFamily: '"Noto Kufi Arabic", serif' }}
+          dir="rtl"
+        >
+          سلطانة ترحب بكم
+        </motion.p>
+      </div>
 
       <button
         type="button"
         onClick={finish}
-        className="absolute bottom-6 end-6 flex min-h-11 items-center rounded-full border border-cream/30 bg-navy-deep/60 px-4 font-ui text-xs font-medium uppercase tracking-wide text-cream"
+        className="absolute bottom-6 end-6 z-10 flex min-h-11 items-center rounded-full border border-navy/15 bg-white/60 px-4 font-ui text-xs font-medium uppercase tracking-wide text-navy/70"
       >
         {t("splash.skip")}
       </button>

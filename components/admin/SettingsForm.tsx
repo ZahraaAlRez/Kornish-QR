@@ -10,6 +10,11 @@ export default function SettingsForm({ settings }: { settings: CafeSettings }) {
   const { t } = useLocale();
   const [saved, setSaved] = useState(false);
   const [recoveryEmailError, setRecoveryEmailError] = useState(false);
+  // Controlled text input rather than type="number": a plain number input
+  // renders its digits in the OS/browser's default numbering system (e.g.
+  // Arabic-Indic digits on an Arabic-locale device) regardless of the
+  // page's own language — this sidesteps that entirely.
+  const [usdToLbpRate, setUsdToLbpRate] = useState(String(settings.usd_to_lbp_rate ?? 90000));
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -77,6 +82,19 @@ export default function SettingsForm({ settings }: { settings: CafeSettings }) {
         {recoveryEmailError && (
           <span className="mt-1 block text-xs text-red-600">{t("admin.settings.recoveryEmailRequired")}</span>
         )}
+      </label>
+
+      <label className="block text-sm font-medium text-navy">
+        {t("admin.settings.usdToLbpRate")} <span className="font-normal text-navy/50">{t("admin.settings.usdToLbpRateHint")}</span>
+        <input
+          name="usdToLbpRate"
+          type="text"
+          inputMode="decimal"
+          dir="ltr"
+          value={usdToLbpRate}
+          onChange={(e) => setUsdToLbpRate(e.target.value.replace(/[^0-9.]/g, ""))}
+          className="mt-1 w-full rounded-lg border border-gold/30 p-2 text-sm"
+        />
       </label>
 
       <div className="grid grid-cols-3 gap-3">

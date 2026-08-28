@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { motion, useTransform, type MotionValue } from "framer-motion";
 import { useLocale } from "@/lib/i18n/LocaleContext";
 import LanguageToggle from "@/components/LanguageToggle";
+import CurrencyToggle from "@/components/CurrencyToggle";
 
 interface Props {
   cartCount: number;
@@ -94,8 +95,8 @@ export default function StickyNav({
           />
         </motion.button>
 
-        <motion.div style={{ opacity: chromeOpacity, y: chromeY }} className="flex flex-1 items-center gap-2">
-          <div className="relative flex-1">
+        <motion.div style={{ opacity: chromeOpacity, y: chromeY }} className="flex flex-1 items-center gap-1.5 sm:gap-2">
+          <div className="relative min-w-0 flex-1">
             <input
               value={searchQuery}
               onChange={(e) => onSearchChange(e.target.value)}
@@ -103,6 +104,7 @@ export default function StickyNav({
               className="h-11 w-full rounded-full border border-navy/10 bg-white/90 px-4 font-ui text-sm text-navy outline-none placeholder:text-navy/40 focus:border-gold"
             />
           </div>
+          <CurrencyToggle variant="light" />
           <LanguageToggle variant="light" />
           <button
             type="button"

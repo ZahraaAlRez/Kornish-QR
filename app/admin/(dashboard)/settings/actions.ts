@@ -31,12 +31,19 @@ export async function saveSettings(formData: FormData): Promise<{ ok: true } | {
   const supabase = createServiceClient();
   const logo = formData.get("logo");
 
+  // Falls back to the current default rather than 0 if the field is left
+  // blank or entered as something non-numeric — a bad rate silently zeroing
+  // out every LBP price is worse than just ignoring the edit.
+  const rateRaw = Number(formData.get("usdToLbpRate"));
+  const usdToLbpRate = Number.isFinite(rateRaw) && rateRaw > 0 ? rateRaw : 90000;
+
   const row: Record<string, unknown> = {
     cafe_name: String(formData.get("cafeName") ?? ""),
     whatsapp_number: String(formData.get("whatsappNumber") ?? "") || null,
     external_system_webhook_url: String(formData.get("webhookUrl") ?? "") || null,
     external_system_api_key: String(formData.get("apiKey") ?? "") || null,
     admin_recovery_email: recoveryEmail,
+    usd_to_lbp_rate: usdToLbpRate,
     brand_colors: {
       primary: String(formData.get("primaryColor") ?? "#1F2B45"),
       accent: String(formData.get("accentColor") ?? "#C9A876"),

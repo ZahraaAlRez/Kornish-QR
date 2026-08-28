@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import type { MenuItem } from "@/lib/supabase/types";
 import { useLocale } from "@/lib/i18n/LocaleContext";
+import { useCurrency } from "@/lib/currency/CurrencyContext";
 import PhotoTile from "@/components/PhotoTile";
 
 interface Props {
@@ -16,6 +17,7 @@ interface Props {
 
 export default function MenuItemCard({ item, categoryHint, onSelect, onQuickAdd }: Props) {
   const { pick } = useLocale();
+  const { formatPrice } = useCurrency();
   const name = pick(item.name_en, item.name_ar);
   const description = pick(item.description_en ?? "", item.description_ar);
   const photoRef = useRef<HTMLDivElement>(null);
@@ -65,7 +67,7 @@ export default function MenuItemCard({ item, categoryHint, onSelect, onQuickAdd 
       <div className="flex flex-1 flex-col gap-1 p-3">
         <span className="font-ui text-[15px] font-semibold text-navy">{name}</span>
         {description && <span className="line-clamp-2 font-sans text-xs text-navy/60">{description}</span>}
-        <span className="mt-1 font-ui text-base font-bold text-terracotta">${item.price.toFixed(2)}</span>
+        <span className="mt-1 font-ui text-base font-bold text-terracotta">{formatPrice(item.price)}</span>
       </div>
     </motion.button>
   );

@@ -9,6 +9,7 @@ import { accentForIndex, kineticPhraseForIndex } from "@/lib/categoryAccents";
 import CategoryTabs from "./CategoryTabs";
 import MenuItemCard from "./MenuItemCard";
 import KineticBackdrop from "./KineticBackdrop";
+import FloatingCartBar from "./FloatingCartBar";
 
 interface Props {
   categories: Category[];
@@ -18,6 +19,9 @@ interface Props {
   onSelectItem: (item: MenuItem) => void;
   onQuickAdd: (item: MenuItem, sourceRect: DOMRect | null) => void;
   searchQuery: string;
+  cartCount: number;
+  cartTotal: number;
+  onOpenCart: () => void;
 }
 
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -26,7 +30,7 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 const CONTAINER = "mx-auto w-full max-w-[1180px] px-4 sm:px-6 lg:px-8";
 
 const MenuBrowser = forwardRef<HTMLDivElement, Props>(function MenuBrowser(
-  { categories, menuItems, activeCategoryId, onSelectCategory, onSelectItem, onQuickAdd, searchQuery },
+  { categories, menuItems, activeCategoryId, onSelectCategory, onSelectItem, onQuickAdd, searchQuery, cartCount, cartTotal, onOpenCart },
   ref
 ) {
   const { t, pick } = useLocale();
@@ -129,6 +133,10 @@ const MenuBrowser = forwardRef<HTMLDivElement, Props>(function MenuBrowser(
             </motion.div>
           </AnimatePresence>
         </div>
+
+        <AnimatePresence>
+          {cartCount > 0 && <FloatingCartBar key="cart-bar" count={cartCount} total={cartTotal} onOpen={onOpenCart} />}
+        </AnimatePresence>
       </div>
 
       <div className="mt-auto">

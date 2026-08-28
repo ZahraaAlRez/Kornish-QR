@@ -21,6 +21,7 @@ const FALLBACK_SETTINGS: CafeSettings = {
   admin_recovery_email: null,
   admin_reset_token: null,
   admin_reset_token_expires_at: null,
+  usd_to_lbp_rate: 90000,
   updated_at: new Date().toISOString(),
 };
 

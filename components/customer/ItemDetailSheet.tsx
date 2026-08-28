@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { motion } from "framer-motion";
 import type { MenuItem } from "@/lib/supabase/types";
 import { useLocale } from "@/lib/i18n/LocaleContext";
+import { useCurrency } from "@/lib/currency/CurrencyContext";
 import PhotoTile from "@/components/PhotoTile";
 
 interface Props {
@@ -14,6 +15,7 @@ interface Props {
 
 export default function ItemDetailSheet({ item, onClose, onAdd }: Props) {
   const { t, pick } = useLocale();
+  const { formatPrice } = useCurrency();
   const [quantity, setQuantity] = useState(1);
   const [notes, setNotes] = useState("");
   const photoRef = useRef<HTMLDivElement>(null);
@@ -41,7 +43,7 @@ export default function ItemDetailSheet({ item, onClose, onAdd }: Props) {
         </div>
         <h2 className="font-serif text-xl italic text-navy">{name}</h2>
         {description && <p className="mt-1 font-sans text-sm text-navy/70">{description}</p>}
-        <p className="mt-2 font-ui text-lg font-bold text-terracotta">${item.price.toFixed(2)}</p>
+        <p className="mt-2 font-ui text-lg font-bold text-terracotta">{formatPrice(item.price)}</p>
 
         <div className="mt-4 flex items-center gap-4">
           <span className="font-ui text-sm font-medium text-navy">{t("item.quantity")}</span>
@@ -78,7 +80,7 @@ export default function ItemDetailSheet({ item, onClose, onAdd }: Props) {
           onClick={handleAdd}
           className="mt-5 w-full rounded-full bg-gold-gradient py-3 font-ui text-sm font-semibold uppercase tracking-wide text-navy"
         >
-          {t("item.addToCart")} · ${(item.price * quantity).toFixed(2)}
+          {t("item.addToCart")} · {formatPrice(item.price * quantity)}
         </motion.button>
       </motion.div>
     </div>

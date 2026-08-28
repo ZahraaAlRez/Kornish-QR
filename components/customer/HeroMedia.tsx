@@ -59,6 +59,7 @@ function ProductImage({ photoId, fallbackGradient, className }: { photoId: strin
       src={`https://images.unsplash.com/photo-${photoId}?w=600&q=75&fm=jpg&fit=crop&auto=format`}
       alt=""
       aria-hidden="true"
+      decoding="async"
       onError={() => setErrored(true)}
       className={`bg-sand object-cover shadow-card ${className}`}
     />

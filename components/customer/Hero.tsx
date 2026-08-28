@@ -5,6 +5,7 @@ import { motion, useTransform, type MotionValue } from "framer-motion";
 import { useLocale } from "@/lib/i18n/LocaleContext";
 import { INTRO_SEEN_KEY } from "@/lib/introSeen";
 import LanguageToggle from "@/components/LanguageToggle";
+import CurrencyToggle from "@/components/CurrencyToggle";
 import Footer from "@/components/Footer";
 import HeroMedia from "./HeroMedia";
 
@@ -102,7 +103,8 @@ const Hero = forwardRef<HTMLDivElement, Props>(function Hero({ cafeName, onViewM
       {/* z-20: the centered content column below is also z-10 and, being
           later in DOM order, would otherwise paint over (and intercept
           clicks in) this toggle's empty min-h-dvh region above the content. */}
-      <div className="absolute inset-x-0 top-0 z-20 flex justify-end p-4">
+      <div className="absolute inset-x-0 top-0 z-20 flex justify-end gap-2 p-4">
+        <CurrencyToggle variant="light" />
         <LanguageToggle variant="light" />
       </div>
 
@@ -188,8 +190,12 @@ const Hero = forwardRef<HTMLDivElement, Props>(function Hero({ cafeName, onViewM
 
 export default Hero;
 
-/** Layered champagne-gold ribbons that curve around the logo, drawn in on first visit. */
-function Ribbons({ fast }: { fast: boolean }) {
+/**
+ * Layered champagne-gold ribbons that curve around the logo, drawn in on
+ * first visit. Exported so the welcome splash's text intro can reuse the
+ * exact same background treatment as the hero it hands off to.
+ */
+export function Ribbons({ fast }: { fast: boolean }) {
   const paths = [
     { d: "M-10,65 C120,0 260,0 410,90", delay: 0.1, opacity: 0.65, width: 2.4 },
     { d: "M-10,135 C140,195 270,85 410,150", delay: 0.24, opacity: 0.45, width: 1.8 },

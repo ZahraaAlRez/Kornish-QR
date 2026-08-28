@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { useLocale } from "@/lib/i18n/LocaleContext";
+import { useCurrency } from "@/lib/currency/CurrencyContext";
 
 interface Props {
   total: number;
@@ -12,6 +13,7 @@ interface Props {
 
 export default function OrderConfirmation({ total, whatsappLink, onNewOrder }: Props) {
   const { t } = useLocale();
+  const { formatPrice } = useCurrency();
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-navy-deep/50 backdrop-blur-sm p-6">
@@ -40,7 +42,7 @@ export default function OrderConfirmation({ total, whatsappLink, onNewOrder }: P
 
         <h2 className="font-serif text-2xl italic text-navy">{t("confirmation.title")}</h2>
         <p className="mt-2 font-sans text-sm text-navy/70">
-          {t("cart.total")}: ${total.toFixed(2)}
+          {t("cart.total")}: {formatPrice(total)}
         </p>
 
         {whatsappLink ? (

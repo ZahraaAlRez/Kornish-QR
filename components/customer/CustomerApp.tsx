@@ -6,10 +6,11 @@ import type { Category, MenuItem, CafeSettings } from "@/lib/supabase/types";
 import { useLocale } from "@/lib/i18n/LocaleContext";
 import { SPLASH_SEEN_KEY } from "@/lib/introSeen";
 import { useLenis } from "@/components/motion/LenisProvider";
+import { CurrencyProvider } from "@/lib/currency/CurrencyContext";
 import { submitOrder } from "@/app/actions/orders";
 import type { CheckoutValues } from "./CheckoutForm";
 import type { CartLine } from "./cartTypes";
-import { dropStaleLines, loadStoredCart, resolveOrderName, saveStoredCart } from "./cartTypes";
+import { cartTotal, dropStaleLines, loadStoredCart, resolveOrderName, saveStoredCart } from "./cartTypes";
 import Hero from "./Hero";
 import StickyNav from "./StickyNav";
 import MenuBrowser from "./MenuBrowser";
@@ -227,7 +228,7 @@ export default function CustomerApp({ categories, menuItems, cafeSettings, initi
   }
 
   return (
-    <>
+    <CurrencyProvider rate={cafeSettings.usd_to_lbp_rate}>
       <StickyNav
         cartCount={cartCount}
         onOpenCart={() => setModal("cart")}
@@ -240,10 +241,28 @@ export default function CustomerApp({ categories, menuItems, cafeSettings, initi
         }}
       />
 
-      {visitPhase === "ready" && (
-        <div className={`transition-all duration-200 ${fading ? "translate-y-1 opacity-0" : "translate-y-0 opacity-100"}`}>
-          <Hero ref={heroRef} cafeName={cafeSettings.cafe_name} onViewMenu={scrollToMenu} scrollProgress={scrollYProgress} />
+      <div className={`transition-all duration-200 ${fading ? "translate-y-1 opacity-0" : "translate-y-0 opacity-100"}`}>
+        {/* Always mounted, and scoped to Hero alone (not the menu below it),
+            so `heroRef` is a real, correctly-sized DOM node the moment
+            `useScroll`'s target-binding effect first runs. That effect keys
+            off the ref object's identity, which never changes across
+            renders, so it only ever fires once — if Hero were still
+            conditionally absent at that first commit, the scroll tracker
+            would permanently fall back to measuring the whole page's scroll
+            range instead of just the hero's, and every progress-driven
+            reveal downstream (including the sticky nav's cart button) would
+            stay stuck barely visible for the rest of the page. The
+            min-height classes match Hero's own sizing so the target has a
+            sane, non-degenerate height even before Hero's content mounts
+            inside it. Hero's own mount timing/animation choreography is
+            untouched — only the ref target moved outward. */}
+        <div ref={heroRef} className="min-h-[100svh] md:min-h-[100dvh]">
+          {visitPhase === "ready" && (
+            <Hero cafeName={cafeSettings.cafe_name} onViewMenu={scrollToMenu} scrollProgress={scrollYProgress} />
+          )}
+        </div>
 
+        {visitPhase === "ready" && (
           <MenuBrowser
             ref={menuRef}
             categories={categories}
@@ -253,9 +272,12 @@ export default function CustomerApp({ categories, menuItems, cafeSettings, initi
             onSelectItem={handleSelectItem}
             onQuickAdd={handleQuickAdd}
             searchQuery={searchQuery}
+            cartCount={cartCount}
+            cartTotal={cartTotal(cartLines)}
+            onOpenCart={() => setModal("cart")}
           />
-        </div>
-      )}
+        )}
+      </div>
 
       {visitPhase === "splash" && <WelcomeSplash onDone={() => setVisitPhase("ready")} />}
 
@@ -303,7 +325,7 @@ export default function CustomerApp({ categories, menuItems, cafeSettings, initi
           />
         )}
       </AnimatePresence>
-    </>
+    </CurrencyProvider>
   );
 }
 
