@@ -33,13 +33,20 @@ function useIsDesktop() {
 }
 
 /**
- * "The Sultana Reveal" — full ~2.2s choreography on first visit this
- * session, a fast 0.5s fade straight into the menu on repeat visits. The
- * icon and wordmark are the real supplied artwork (not recreated as CSS
- * shapes): both PNGs have genuine alpha transparency, so `.logo-mask`
- * recolors the actual silhouette navy via CSS mask instead of an
- * approximated color filter. Only the full lockup remains on screen at
- * rest — the icon is a momentary hand-off beat, not a second permanent mark.
+ * "The Sultana Reveal" — full ~1.25s icon-to-wordmark handoff (plus text/CTA
+ * choreography extending to ~2.9s) on first visit this session, proportion-
+ * ally compressed (~0.56x) from an earlier, slower cut — every delay/
+ * duration here was scaled down together with the splash's own timing, not
+ * just trimmed at one stage, so the relative pacing between icon, wordmark,
+ * text, and CTA is unchanged, just faster throughout. A fast 0.5s fade
+ * straight into the menu on repeat visits. The icon and wordmark are the
+ * real supplied artwork (not recreated as CSS shapes): both PNGs have
+ * genuine alpha transparency, so `.logo-mask` recolors the actual silhouette
+ * navy via CSS mask instead of an approximated color filter — and both are
+ * now sized sanely (1600×1549, not the original 6030×5839) so this
+ * animation-heavy sequence doesn't push mobile Safari's GPU memory past what
+ * it'll tolerate. Only the full lockup remains on screen at rest — the icon
+ * is a momentary hand-off beat, not a second permanent mark.
  */
 const Hero = forwardRef<HTMLDivElement, Props>(function Hero({ cafeName, onViewMenu, scrollProgress }, ref) {
   const { t } = useLocale();
@@ -125,7 +132,7 @@ const Hero = forwardRef<HTMLDivElement, Props>(function Hero({ cafeName, onViewM
                 <motion.div
                   initial={{ opacity: 0, scale: 0.85 }}
                   animate={fast ? { opacity: 0 } : { opacity: [0, 1, 1, 0], scale: [0.85, 1.08, 1, 1] }}
-                  transition={fast ? { duration: 0.2 } : { duration: 0.85, delay: 0.25, times: [0, 0.4, 0.6, 1], ease: "easeOut" }}
+                  transition={fast ? { duration: 0.2 } : { duration: 0.48, delay: 0.14, times: [0, 0.4, 0.6, 1], ease: "easeOut" }}
                   className="logo-mask absolute inset-0 m-auto h-[24%] w-[24%] bg-navy"
                   style={{ maskImage: "url(/brand/sultana-logo-icon.png)", WebkitMaskImage: "url(/brand/sultana-logo-icon.png)" }}
                   aria-hidden="true"
@@ -134,7 +141,7 @@ const Hero = forwardRef<HTMLDivElement, Props>(function Hero({ cafeName, onViewM
                 <motion.div
                   initial={{ opacity: 0, clipPath: "inset(100% 0 0 0)" }}
                   animate={{ opacity: 1, clipPath: "inset(0% 0 0 0)" }}
-                  transition={fast ? { duration: 0.35, ease: "easeOut" } : { duration: 0.55, delay: 0.7, ease: EASE }}
+                  transition={fast ? { duration: 0.35, ease: "easeOut" } : { duration: 0.31, delay: 0.4, ease: EASE }}
                   className="logo-mask absolute inset-0 bg-navy"
                   style={{
                     maskImage: "url(/brand/sultana-logo-full-light.png)",
@@ -149,7 +156,7 @@ const Hero = forwardRef<HTMLDivElement, Props>(function Hero({ cafeName, onViewM
             <motion.p
               initial={{ opacity: 0, letterSpacing: "0.5em" }}
               animate={{ opacity: 1, letterSpacing: "0.14em" }}
-              transition={fast ? { duration: 0.25, delay: 0.15 } : { duration: 0.4, delay: 1.3, ease: "easeOut" }}
+              transition={fast ? { duration: 0.25, delay: 0.15 } : { duration: 0.23, delay: 0.73, ease: "easeOut" }}
               className="font-ui text-xs font-bold uppercase text-navy/80"
             >
               {cafeName}
@@ -158,7 +165,7 @@ const Hero = forwardRef<HTMLDivElement, Props>(function Hero({ cafeName, onViewM
             <motion.p
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={fast ? { duration: 0.2, delay: 0.12 } : { duration: 0.35, delay: 1.75, ease: "easeOut" }}
+              transition={fast ? { duration: 0.2, delay: 0.12 } : { duration: 0.2, delay: 0.99, ease: "easeOut" }}
               className="font-ui text-xs uppercase tracking-[0.3em] text-terracotta"
             >
               {t("hero.tagline")}
@@ -173,7 +180,7 @@ const Hero = forwardRef<HTMLDivElement, Props>(function Hero({ cafeName, onViewM
           <motion.div
             initial={isDesktop ? { opacity: 0, x: 40 } : { opacity: 0, y: 40 }}
             animate={{ opacity: 1, x: 0, y: 0 }}
-            transition={fast ? { duration: 0.25, delay: 0.1 } : { duration: 0.65, delay: 1.5, ease: EASE }}
+            transition={fast ? { duration: 0.25, delay: 0.1 } : { duration: 0.37, delay: 0.85, ease: EASE }}
             className="w-full max-w-md justify-self-center lg:max-w-none lg:justify-self-end"
           >
             <HeroMedia style={{ y: mediaParallaxY }} />
@@ -197,10 +204,10 @@ export default Hero;
  */
 export function Ribbons({ fast }: { fast: boolean }) {
   const paths = [
-    { d: "M-10,65 C120,0 260,0 410,90", delay: 0.1, opacity: 0.65, width: 2.4 },
-    { d: "M-10,135 C140,195 270,85 410,150", delay: 0.24, opacity: 0.45, width: 1.8 },
-    { d: "M-10,225 C160,275 250,190 410,240", delay: 0.38, opacity: 0.55, width: 2 },
-    { d: "M-10,270 C130,320 280,255 410,290", delay: 0.5, opacity: 0.35, width: 1.5 },
+    { d: "M-10,65 C120,0 260,0 410,90", delay: 0.06, opacity: 0.65, width: 2.4 },
+    { d: "M-10,135 C140,195 270,85 410,150", delay: 0.14, opacity: 0.45, width: 1.8 },
+    { d: "M-10,225 C160,275 250,190 410,240", delay: 0.21, opacity: 0.55, width: 2 },
+    { d: "M-10,270 C130,320 280,255 410,290", delay: 0.28, opacity: 0.35, width: 1.5 },
   ];
 
   return (
@@ -221,7 +228,7 @@ export function Ribbons({ fast }: { fast: boolean }) {
           vectorEffect="non-scaling-stroke"
           initial={{ pathLength: 0, opacity: 0 }}
           animate={{ pathLength: 1, opacity: p.opacity }}
-          transition={fast ? { duration: 0 } : { duration: 0.9, delay: p.delay, ease: EASE }}
+          transition={fast ? { duration: 0 } : { duration: 0.51, delay: p.delay, ease: EASE }}
         />
       ))}
     </svg>
@@ -234,7 +241,7 @@ function SwipeUpCue() {
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      transition={{ duration: 0.4, delay: 2.6 }}
+      transition={{ duration: 0.23, delay: 1.47 }}
       className="mt-1 flex flex-col items-center gap-1 text-navy/40 lg:items-start"
     >
       <span className="font-ui text-[10px] uppercase tracking-[0.2em]">{t("hero.swipeUp")}</span>
@@ -250,7 +257,7 @@ function ViewMenuButton({ fast, onClick, label }: { fast: boolean; onClick: () =
     <motion.button
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={fast ? { duration: 0.2, delay: 0.22 } : { duration: 0.35, delay: 2.15, ease: "easeOut" }}
+      transition={fast ? { duration: 0.2, delay: 0.22 } : { duration: 0.2, delay: 1.21, ease: "easeOut" }}
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
       className="group relative h-[52px] w-44 shrink-0 overflow-hidden rounded-full bg-navy font-ui text-sm font-bold uppercase tracking-wide text-cream transition-transform hover:scale-[1.02] lg:w-52"
@@ -263,7 +270,7 @@ function ViewMenuButton({ fast, onClick, label }: { fast: boolean; onClick: () =
           aria-hidden="true"
           initial={{ x: "-150%" }}
           animate={{ x: "350%" }}
-          transition={{ duration: 0.6, delay: 2.55, ease: "easeInOut" }}
+          transition={{ duration: 0.34, delay: 1.44, ease: "easeInOut" }}
           className="absolute inset-y-0 left-0 z-0 w-1/3 skew-x-[-20deg] bg-white/25"
         />
       )}

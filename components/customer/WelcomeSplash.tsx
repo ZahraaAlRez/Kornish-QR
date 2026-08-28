@@ -9,7 +9,23 @@ interface Props {
   onDone: () => void;
 }
 
-const DISPLAY_MS = 2300;
+// Proportionally compressed (~0.56x) from an earlier, slower cut — the
+// splash+handoff together used to take customers to a fully-settled logo in
+// ~3.9s of specified animation duration, which read as sluggish on real
+// mobile hardware. Every delay/duration below (and Hero's own non-`fast`
+// entrance timings) was scaled by the same factor together, not just
+// DISPLAY_MS in isolation, so the internal choreography (icon → EN line →
+// divider → AR line, each still comfortably finished before this fires)
+// stays proportionally identical, just faster throughout rather than
+// jump-cut at one stage. Deliberately not cut further than this: WebKit
+// testing surfaced ~1-2.5s of React hydration/state-resolution overhead
+// between page load and Hero's content appearing that exists independent of
+// this animation timing entirely (confirmed via the fast-path, where the
+// transition itself is near-instant but content still takes seconds to
+// mount) — cutting these numbers past this point stops helping the real
+// bottleneck and starts risking the sequence reading as an abrupt jump-cut
+// instead of a quick, intentional reveal.
+const DISPLAY_MS = 1300;
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 /**
@@ -31,8 +47,9 @@ export default function WelcomeSplash({ onDone }: Props) {
     if (done.current) return;
     done.current = true;
     setVisible(false);
-    // Let the exit fade play before unmounting for real.
-    setTimeout(onDone, 350);
+    // Let the exit fade play before unmounting for real — matches the
+    // 0.2s duration on the opacity transition above.
+    setTimeout(onDone, 200);
   }
 
   useEffect(() => {
@@ -45,10 +62,10 @@ export default function WelcomeSplash({ onDone }: Props) {
     <motion.div
       initial={{ opacity: 1 }}
       animate={{ opacity: visible ? 1 : 0 }}
-      transition={{ duration: 0.35, ease: "easeInOut" }}
+      transition={{ duration: 0.2, ease: "easeInOut" }}
       // Turned off the instant `visible` flips to false (not after the fade
       // finishes) so this overlay can never intercept a tap/click while it's
-      // invisibly fading out — it's fully unmounted 350ms later regardless
+      // invisibly fading out — it's fully unmounted 100ms later regardless
       // (see `finish()`), but this closes the gap for that whole window.
       style={{ pointerEvents: visible ? "auto" : "none" }}
       className="fixed inset-0 z-50 flex items-center justify-center overflow-hidden bg-ivory"
@@ -68,7 +85,7 @@ export default function WelcomeSplash({ onDone }: Props) {
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.6, ease: EASE }}
+          transition={{ duration: 0.34, ease: EASE }}
           className="logo-mask h-10 w-10 bg-navy sm:h-12 sm:w-12"
           style={{ maskImage: "url(/brand/sultana-logo-icon.png)", WebkitMaskImage: "url(/brand/sultana-logo-icon.png)" }}
           role="img"
@@ -83,7 +100,7 @@ export default function WelcomeSplash({ onDone }: Props) {
         <motion.p
           initial={{ opacity: 0, y: 18, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.7, ease: EASE, delay: 0.15 }}
+          transition={{ duration: 0.4, ease: EASE, delay: 0.08 }}
           className="font-serif text-4xl italic text-navy sm:text-5xl"
           dir="ltr"
         >
@@ -93,7 +110,7 @@ export default function WelcomeSplash({ onDone }: Props) {
         <motion.div
           initial={{ opacity: 0, scaleX: 0 }}
           animate={{ opacity: 0.6, scaleX: 1 }}
-          transition={{ duration: 0.5, ease: EASE, delay: 0.55 }}
+          transition={{ duration: 0.28, ease: EASE, delay: 0.31 }}
           className="h-px w-16 bg-gold"
           aria-hidden="true"
         />
@@ -101,7 +118,7 @@ export default function WelcomeSplash({ onDone }: Props) {
         <motion.p
           initial={{ opacity: 0, y: 14, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.7, ease: EASE, delay: 0.65 }}
+          transition={{ duration: 0.4, ease: EASE, delay: 0.37 }}
           className="text-2xl text-navy/90 sm:text-3xl"
           style={{ fontFamily: '"Noto Kufi Arabic", serif' }}
           dir="rtl"
