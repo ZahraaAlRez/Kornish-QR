@@ -83,7 +83,7 @@ export default function CartDrawer({ lines, onClose, onUpdateQuantity, onUpdateN
                   transition={{ duration: 0.25 }}
                   className="flex gap-3 rounded-2xl bg-white p-3 shadow-card"
                 >
-                  <PhotoTile src={line.photoUrl} alt={pick(line.nameEn, line.nameAr)} className="h-14 w-14 shrink-0 rounded-xl" />
+                  <PhotoTile src={line.photoUrl} alt={pick(line.nameEn, line.nameAr)} className="h-14 w-14 shrink-0 rounded-xl" sizes="56px" />
                   <div className="flex-1">
                     <div className="flex items-start justify-between gap-2">
                       <div>

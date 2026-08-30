@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import type { Category, MenuItem } from "@/lib/supabase/types";
 import { useLocale } from "@/lib/i18n/LocaleContext";
 import PhotoTile from "@/components/PhotoTile";
@@ -78,7 +78,7 @@ export default function MenuManager({ categories, menuItems }: Props) {
         return (
           <section key={category.id}>
             <div className="mb-2 flex items-center gap-3">
-              <PhotoTile src={category.photo_url} alt="" className="h-10 w-10 shrink-0 rounded-lg" />
+              <PhotoTile src={category.photo_url} alt="" className="h-10 w-10 shrink-0 rounded-lg" sizes="40px" />
               <h3 className="flex-1 text-sm font-semibold uppercase tracking-wide text-navy/70">
                 {pick(category.name_en, category.name_ar)}
               </h3>
@@ -98,7 +98,7 @@ export default function MenuManager({ categories, menuItems }: Props) {
               {items.length === 0 && <p className="text-xs text-navy/50">{t("admin.menu.noItems")}</p>}
               {items.map((item) => (
                 <div key={item.id} className="flex items-center gap-3 rounded-2xl bg-white p-3 shadow-card">
-                  <PhotoTile src={item.photo_url} alt="" className="h-14 w-14 shrink-0 rounded-xl" />
+                  <PhotoTile src={item.photo_url} alt="" className="h-14 w-14 shrink-0 rounded-xl" sizes="56px" />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-navy">{pick(item.name_en, item.name_ar)}</p>
                     <p className="text-xs text-gold">${item.price.toFixed(2)}</p>
@@ -193,9 +193,68 @@ export default function MenuManager({ categories, menuItems }: Props) {
 }
 
 /** Thumbnail of the current photo (if any) with a remove (×) toggle, plus the file picker for a replacement. */
+const PHOTO_MAX_EDGE = 1200;
+
+/**
+ * Downscales an oversized photo in the browser before it ever leaves the
+ * admin's device — a phone-camera photo can easily be 4000-7000px on a
+ * side, which decodes to 100+MB in memory once rendered as a small card
+ * thumbnail on a customer's phone. This is what was silently crashing real
+ * customers' iPhone Safari sessions after scrolling through several such
+ * photos (root-caused and the 26 already-live oversized photos fixed
+ * directly in storage; this stops new ones from recurring at the source,
+ * since neither the upload action nor the customer-facing `<img>` do any
+ * resizing of their own). Non-image files or anything already reasonably
+ * sized pass through untouched.
+ */
+async function downscaleIfOversized(file: File): Promise<File> {
+  if (!file.type.startsWith("image/")) return file;
+
+  const bitmap = await createImageBitmap(file).catch(() => null);
+  if (!bitmap) return file;
+
+  const longEdge = Math.max(bitmap.width, bitmap.height);
+  if (longEdge <= PHOTO_MAX_EDGE) {
+    bitmap.close();
+    return file;
+  }
+
+  const scale = PHOTO_MAX_EDGE / longEdge;
+  const width = Math.round(bitmap.width * scale);
+  const height = Math.round(bitmap.height * scale);
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    bitmap.close();
+    return file;
+  }
+  ctx.drawImage(bitmap, 0, 0, width, height);
+  bitmap.close();
+
+  const blob: Blob | null = await new Promise((resolve) => canvas.toBlob((b) => resolve(b), "image/jpeg", 0.85));
+  if (!blob) return file;
+
+  const newName = file.name.replace(/\.[^.]+$/, "") + ".jpg";
+  return new File([blob], newName, { type: "image/jpeg" });
+}
+
 function PhotoField({ label, currentUrl }: { label: string; currentUrl: string | null }) {
   const { t } = useLocale();
   const [removed, setRemoved] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const resized = await downscaleIfOversized(file);
+    if (resized === file) return; // already within bounds, native selection stands as-is
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(resized);
+    if (inputRef.current) inputRef.current.files = dataTransfer.files;
+  }
 
   return (
     <div>
@@ -214,7 +273,7 @@ function PhotoField({ label, currentUrl }: { label: string; currentUrl: string |
         </div>
       )}
       <input type="hidden" name="removePhoto" value={removed ? "1" : "0"} />
-      <input type="file" name="photo" accept="image/*" className="mt-1 w-full text-sm" />
+      <input ref={inputRef} type="file" name="photo" accept="image/*" onChange={handleFileChange} className="mt-1 w-full text-sm" />
     </div>
   );
 }

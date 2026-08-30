@@ -39,7 +39,7 @@ export default function ItemDetailSheet({ item, onClose, onAdd }: Props) {
         onClick={(e) => e.stopPropagation()}
       >
         <div ref={photoRef} className="mb-4 h-40 w-full overflow-hidden rounded-2xl">
-          <PhotoTile src={item.photo_url} alt={name} className="h-full w-full" />
+          <PhotoTile src={item.photo_url} alt={name} className="h-full w-full" sizes="(min-width: 640px) 600px, 100vw" />
         </div>
         <h2 className="font-serif text-xl italic text-navy">{name}</h2>
         {description && <p className="mt-1 font-sans text-sm text-navy/70">{description}</p>}
