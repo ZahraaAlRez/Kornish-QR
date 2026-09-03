@@ -104,6 +104,8 @@ const strings = {
   "admin.menu.descriptionEn": { en: "Description (English)", ar: "الوصف (إنجليزي)" },
   "admin.menu.descriptionAr": { en: "Description (Arabic)", ar: "الوصف (عربي)" },
   "admin.menu.price": { en: "Price", ar: "السعر" },
+  "admin.menu.priceCurrency": { en: "Enter price in", ar: "أدخل السعر بـ" },
+  "admin.menu.priceConverted": { en: "Saved as", ar: "يُحفظ كـ" },
   "admin.menu.category": { en: "Category", ar: "القسم" },
   "admin.menu.photo": { en: "Photo", ar: "الصورة" },
   "admin.menu.categoryPhoto": { en: "Category banner photo", ar: "صورة غلاف القسم" },

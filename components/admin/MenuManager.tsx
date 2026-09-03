@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { Category, MenuItem } from "@/lib/supabase/types";
 import { useLocale } from "@/lib/i18n/LocaleContext";
 import PhotoTile from "@/components/PhotoTile";
@@ -18,9 +18,10 @@ import {
 interface Props {
   categories: Category[];
   menuItems: MenuItem[];
+  usdToLbpRate: number;
 }
 
-export default function MenuManager({ categories, menuItems }: Props) {
+export default function MenuManager({ categories, menuItems, usdToLbpRate }: Props) {
   const { t, pick } = useLocale();
   const [editingItem, setEditingItem] = useState<MenuItem | "new" | null>(null);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
@@ -101,7 +102,10 @@ export default function MenuManager({ categories, menuItems }: Props) {
                   <PhotoTile src={item.photo_url} alt="" className="h-14 w-14 shrink-0 rounded-xl" sizes="56px" />
                   <div className="flex-1">
                     <p className="text-sm font-medium text-navy">{pick(item.name_en, item.name_ar)}</p>
-                    <p className="text-xs text-gold">${item.price.toFixed(2)}</p>
+                    <p className="text-xs text-gold">
+                      ${item.price.toFixed(2)}
+                      <span className="text-navy/40"> · {Math.round(item.price * usdToLbpRate).toLocaleString("en-US")} LL</span>
+                    </p>
                   </div>
                   <button
                     onClick={() => toggleAvailability(item.id, !item.available)}
@@ -183,6 +187,7 @@ export default function MenuManager({ categories, menuItems }: Props) {
         <ItemFormModal
           item={editingItem === "new" ? null : editingItem}
           categories={categories}
+          usdToLbpRate={usdToLbpRate}
           onClose={() => setEditingItem(null)}
         />
       )}
@@ -334,21 +339,64 @@ function TranslateButton({
   );
 }
 
+/** The unit the admin is currently typing a price in — independent of `MenuItem.price`, which is always stored as USD. */
+type PriceCurrency = "USD" | "LBP";
+const PRICE_CURRENCY_KEY = "sultana-admin-price-currency";
+
+function formatForPriceCurrency(usdAmount: number, currency: PriceCurrency, rate: number): string {
+  return currency === "USD" ? usdAmount.toFixed(2) : String(Math.round(usdAmount * rate));
+}
+
 function ItemFormModal({
   item,
   categories,
+  usdToLbpRate,
   onClose,
 }: {
   item: MenuItem | null;
   categories: Category[];
+  usdToLbpRate: number;
   onClose: () => void;
 }) {
   const { t, pick } = useLocale();
+  // Admins here mostly have their prices in LL, not $, so entry defaults to
+  // LL and converts to USD (the DB's storage unit) on save — the same
+  // reasoning as sultana-currency on the customer side, just for typing
+  // instead of display. Preference remembered across items in a session.
+  const [priceCurrency, setPriceCurrency] = useState<PriceCurrency>("LBP");
   // A plain type="number" input renders its digits using the OS/browser's
   // default numbering system (e.g. Arabic-Indic digits on an Arabic-locale
   // machine) regardless of the page's own language — a controlled text
   // input sidesteps that entirely and guarantees plain ASCII digits.
-  const [price, setPrice] = useState(item?.price != null ? String(item.price) : "");
+  const [price, setPrice] = useState(
+    item?.price != null ? formatForPriceCurrency(item.price, "LBP", usdToLbpRate) : ""
+  );
+
+  useEffect(() => {
+    const stored = window.localStorage.getItem(PRICE_CURRENCY_KEY);
+    if ((stored === "USD" || stored === "LBP") && stored !== priceCurrency) {
+      setPriceCurrency(stored);
+      if (item?.price != null) setPrice(formatForPriceCurrency(item.price, stored, usdToLbpRate));
+    }
+    // Runs once on mount only — this is a one-time hydration from localStorage, not a sync loop.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function handleCurrencyChange(next: PriceCurrency) {
+    if (next === priceCurrency) return;
+    const numeric = Number(price);
+    if (price !== "" && Number.isFinite(numeric)) {
+      const usd = priceCurrency === "USD" ? numeric : numeric / usdToLbpRate;
+      setPrice(formatForPriceCurrency(usd, next, usdToLbpRate));
+    }
+    setPriceCurrency(next);
+    window.localStorage.setItem(PRICE_CURRENCY_KEY, next);
+  }
+
+  const numericPrice = Number(price);
+  const hasValidPrice = price !== "" && Number.isFinite(numericPrice);
+  const usdEquivalent = hasValidPrice ? (priceCurrency === "USD" ? numericPrice : numericPrice / usdToLbpRate) : null;
+
   const [nameEn, setNameEn] = useState(item?.name_en ?? "");
   const [nameAr, setNameAr] = useState(item?.name_ar ?? "");
   const [descriptionEn, setDescriptionEn] = useState(item?.description_en ?? "");
@@ -358,6 +406,12 @@ function ItemFormModal({
     <div className="fixed inset-0 z-30 flex items-end bg-navy-deep/60 sm:items-center sm:justify-center" onClick={onClose}>
       <form
         action={async (formData) => {
+          // The DB always stores price in USD — convert the admin's typed
+          // amount before it ever reaches saveMenuItem.
+          if (priceCurrency === "LBP") {
+            const usd = Number(formData.get("price")) / usdToLbpRate;
+            formData.set("price", (Math.round(usd * 100) / 100).toString());
+          }
           await saveMenuItem(formData);
           onClose();
         }}
@@ -416,17 +470,47 @@ function ItemFormModal({
             />
             <TranslateButton getSource={() => descriptionAr} from="ar" to="en" onResult={setDescriptionEn} />
           </div>
-          <input
-            name="price"
-            type="text"
-            inputMode="decimal"
-            dir="ltr"
-            required
-            value={price}
-            onChange={(e) => setPrice(e.target.value.replace(/[^0-9.]/g, ""))}
-            placeholder={t("admin.menu.price")}
-            className="w-full rounded-lg border border-gold/30 p-2 text-sm"
-          />
+          <div>
+            <div className="mb-1 flex items-center justify-between">
+              <span className="text-xs font-medium text-navy/70">{t("admin.menu.priceCurrency")}</span>
+              <div className="flex overflow-hidden rounded-full border border-gold/40">
+                <button
+                  type="button"
+                  onClick={() => handleCurrencyChange("LBP")}
+                  className={`px-3 py-1 text-xs font-semibold transition ${
+                    priceCurrency === "LBP" ? "bg-gold-gradient text-navy" : "text-bronze"
+                  }`}
+                >
+                  LL
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleCurrencyChange("USD")}
+                  className={`px-3 py-1 text-xs font-semibold transition ${
+                    priceCurrency === "USD" ? "bg-gold-gradient text-navy" : "text-bronze"
+                  }`}
+                >
+                  $
+                </button>
+              </div>
+            </div>
+            <input
+              name="price"
+              type="text"
+              inputMode="decimal"
+              dir="ltr"
+              required
+              value={price}
+              onChange={(e) => setPrice(e.target.value.replace(/[^0-9.]/g, ""))}
+              placeholder={t("admin.menu.price")}
+              className="w-full rounded-lg border border-gold/30 p-2 text-sm"
+            />
+            {priceCurrency === "LBP" && usdEquivalent != null && (
+              <p className="mt-1 text-xs text-navy/50">
+                {t("admin.menu.priceConverted")} ${usdEquivalent.toFixed(2)}
+              </p>
+            )}
+          </div>
           <select name="categoryId" required defaultValue={item?.category_id ?? categories[0]?.id} className="w-full rounded-lg border border-gold/30 p-2 text-sm">
             {categories.map((c) => (
               <option key={c.id} value={c.id}>
