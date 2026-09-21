@@ -36,7 +36,14 @@ export default function OrderConfirmation({ total, whatsappLink, onNewOrder }: P
             animate={{ opacity: 1, scale: 1, rotate: 0 }}
             transition={{ duration: 0.5, ease: "easeOut", delay: 0.1 }}
           >
-            <Image src="/brand/sultana-logo-icon.png" alt="" width={56} height={56} className="relative h-14 w-14 object-contain" />
+            <Image
+              src="/brand/sultana-logo-icon.png"
+              alt=""
+              width={56}
+              height={56}
+              unoptimized
+              className="relative h-14 w-14 object-contain"
+            />
           </motion.div>
         </div>
 

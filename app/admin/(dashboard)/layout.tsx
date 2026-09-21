@@ -27,7 +27,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       <header className="relative flex items-center justify-between border-b border-gold/20 bg-white px-4 py-3">
         <div className="flex items-center gap-2">
-          <Image src="/brand/sultana-logo-icon.png" alt="" width={28} height={28} className="h-7 w-7 object-contain" />
+          <Image
+            src="/brand/sultana-logo-icon.png"
+            alt=""
+            width={28}
+            height={28}
+            unoptimized
+            className="h-7 w-7 object-contain"
+          />
           <h1 className="whitespace-nowrap font-serif text-lg italic text-navy">{t("admin.dashboardTitle")}</h1>
         </div>
         <div className="flex items-center gap-3">

@@ -20,7 +20,14 @@ export default function LoginCard({
   return (
     <div className="w-full max-w-xs rounded-3xl bg-white p-6 shadow-card">
       <div className="mb-4 flex items-center justify-between">
-        <Image src="/brand/sultana-logo-icon.png" alt="" width={40} height={40} className="h-10 w-10 object-contain" />
+        <Image
+          src="/brand/sultana-logo-icon.png"
+          alt=""
+          width={40}
+          height={40}
+          unoptimized
+          className="h-10 w-10 object-contain"
+        />
         <LanguageToggle variant="light" />
       </div>
 
